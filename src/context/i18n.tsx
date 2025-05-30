@@ -56,7 +56,7 @@ const translations: Record<Locale, Translations> = {
     },
     common: {
       english: "English",
-      chinese: "中文",
+      chinese: "Chinese", // Corrected for English UI
     }
   },
   zh: {
@@ -97,7 +97,7 @@ const translations: Record<Locale, Translations> = {
       ariaSubmitAnswer: "提交答案",
     },
     common: {
-      english: "English",
+      english: "英文", // Corrected for Chinese UI
       chinese: "中文",
     }
   },
@@ -128,14 +128,15 @@ export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         result = result[k] as string | Translations;
       } else {
         // Fallback to English if key not found in current locale, then to key itself
-        result = translations['en'];
+        let fallbackResult: string | Translations | undefined = translations['en'];
         for (const k_fb of keys) {
-             if (result && typeof result === 'object' && k_fb in result) {
-                result = result[k_fb] as string | Translations;
+             if (fallbackResult && typeof fallbackResult === 'object' && k_fb in fallbackResult) {
+                fallbackResult = fallbackResult[k_fb] as string | Translations;
              } else {
                 return key; // Key not found in English either
              }
         }
+        result = fallbackResult; // Assign the fallback result
         break;
       }
     }
