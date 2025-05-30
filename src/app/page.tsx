@@ -196,16 +196,21 @@ export default function GamePage() {
 
       setTimeout(() => {
         setShowCelebration(false);
+        let nextProblemDifficulty = difficulty;
+
         if (correct) {
           setScore(prev => prev + 10);
+          nextProblemDifficulty = Math.min(10, difficulty + 1);
+          setDifficulty(nextProblemDifficulty);
         }
+        // If incorrect, nextProblemDifficulty remains the current 'difficulty'
+        // and the 'difficulty' state is not changed, so the player stays at the same level.
+
 
         if (questionNumber < TOTAL_QUESTIONS) {
           const nextQuestionNumber = questionNumber + 1;
           setQuestionNumber(nextQuestionNumber);
-          const nextDifficulty = Math.min(10, 1 + Math.floor((nextQuestionNumber -1) / 2));
-          setDifficulty(nextDifficulty);
-          fetchNewProblem(nextDifficulty); 
+          fetchNewProblem(nextProblemDifficulty); 
         } else {
           setGameState("game_over");
           setMonkeyPosition('hidden');
