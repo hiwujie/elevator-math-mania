@@ -190,15 +190,15 @@ export default function GamePage() {
     setCurrentElevatorFloor(visuallyBoundedResultFloor); 
 
     setTimeout(() => {
-      setGameState("monkey_exiting");
+      setGameState("monkey_exiting"); // This state name is a bit misleading if monkey stays inside
       if (correct) {
         setMonkeyPosition('exiting');
         setMonkeyEmotion('happy');
         setShowCelebration(true);
       } else {
-        setMonkeyPosition('inside'); 
+        setMonkeyPosition('inside'); // Keep monkey inside if incorrect
         setMonkeyEmotion('confused');
-        setShowCelebration(false);
+        setShowCelebration(false); // No celebration for incorrect answer
       }
 
       setTimeout(() => {
@@ -308,7 +308,7 @@ export default function GamePage() {
       <Card className="w-full max-w-3xl shadow-2xl rounded-xl overflow-hidden">
         <CardHeader className="bg-primary/10 pb-4 pt-6 text-center">
            <h1 className="text-3xl font-bold text-primary tracking-tight">
-            Elevator Math Mania
+            玩游戏，学数学
           </h1>
         </CardHeader>
         <CardContent className="p-6 min-h-[550px] flex flex-col justify-between">
