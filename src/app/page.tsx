@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -12,41 +13,50 @@ import ElevatorDisplay from '@/components/game/ElevatorDisplay';
 import Controls from '@/components/game/Controls';
 import CelebrationEffect from '@/components/game/CelebrationEffect';
 
-const MIN_FLOOR = -10;
-const MAX_FLOOR = 10;
+const MIN_FLOOR = -10; // Min possible floor value overall
+const MAX_FLOOR = 10;  // Max possible floor value overall
 const TOTAL_QUESTIONS = 10;
+const ANIMATION_AND_FEEDBACK_DURATION = 2000; // ms
 
-type GameState = "initial" | "playing" | "checking" | "celebrating" | "incorrect_answer" | "game_over";
+type GameState =
+  | "initial"
+  | "loading_problem"
+  | "operator_selection"
+  | "number_selection"
+  | "animating"
+  | "game_over";
 
 export default function GamePage() {
   const [gameState, setGameState] = useState<GameState>("initial");
-  const [currentProblem, setCurrentProblem] = useState<GenerateMathProblemOutput | null>(null);
-  const [elevatorPosition, setElevatorPosition] = useState<number>(0);
+  
+  const [startFloor, setStartFloor] = useState<number>(0);
+  const [targetFloor, setTargetFloor] = useState<number>(0);
+  const [selectedOperator, setSelectedOperator] = useState<'+' | '-' | null>(null);
+  const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
+  
+  const [currentElevatorFloor, setCurrentElevatorFloor] = useState<number>(0); // Actual elevator car position
+  const [isAnimatingCorrect, setIsAnimatingCorrect] = useState<boolean>(false); // For feedback during animation
+
   const [score, setScore] = useState<number>(0);
   const [questionNumber, setQuestionNumber] = useState<number>(0);
   const [difficulty, setDifficulty] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isCorrectAnswer, setIsCorrectAnswer] = useState<boolean>(false);
-
 
   const fetchNewProblem = useCallback(async (newDifficulty: number) => {
     setIsLoading(true);
-    setGameState("playing"); // Set to playing early to allow UI updates
+    setGameState("loading_problem");
+    setSelectedOperator(null);
+    setSelectedNumber(null);
     try {
-      const problem = await generateMathProblem({ difficulty: newDifficulty });
-      // This is a simple way to ensure problem answers are generally within typical elevator range.
-      // A more robust solution might involve prompt engineering or post-processing.
-      if (problem.answer > MAX_FLOOR * 2 || problem.answer < MIN_FLOOR * 2) {
-         console.warn(`Generated problem answer ${problem.answer} is far out of typical range. Trying again.`);
-         // Potentially re-fetch or cap difficulty if this happens often.
-         // For now, we'll proceed but this could be improved.
-      }
-      setCurrentProblem(problem);
-      setElevatorPosition(0); 
+      const problemData = await generateMathProblem({ difficulty: newDifficulty });
+      setStartFloor(problemData.startFloor);
+      setTargetFloor(problemData.targetFloor);
+      setCurrentElevatorFloor(problemData.startFloor); // Elevator starts at the startFloor
+      setGameState("operator_selection");
     } catch (error) {
       console.error("Failed to generate math problem:", error);
+      // TODO: Show user friendly error
       setGameState("initial"); 
-      // Consider adding a user-facing error message here
     }
     setIsLoading(false);
   }, []);
@@ -56,45 +66,59 @@ export default function GamePage() {
     setQuestionNumber(1);
     const initialDifficulty = 1;
     setDifficulty(initialDifficulty);
-    setIsCorrectAnswer(false);
     fetchNewProblem(initialDifficulty);
   };
 
-  const moveElevator = (direction: "up" | "down") => {
-    if (gameState !== "playing" && gameState !== "incorrect_answer" && gameState !== "celebrating") return; // Allow movement during feedback states if desired, but usually not.
-    setElevatorPosition(prev => {
-      const newFloor = direction === "up" ? prev + 1 : prev - 1;
-      return Math.max(MIN_FLOOR, Math.min(MAX_FLOOR, newFloor));
-    });
+  const handleOperatorSelect = (operator: '+' | '-') => {
+    if (gameState === "operator_selection") {
+      setSelectedOperator(operator);
+      setGameState("number_selection");
+    }
+  };
+
+  const handleNumberSelect = (number: number) => {
+    if (gameState === "number_selection") {
+      setSelectedNumber(number);
+      // ProblemStatement will update based on this. User submits next.
+    }
   };
 
   const handleSubmitAnswer = () => {
-    if (!currentProblem || (gameState !== "playing" && gameState !== "incorrect_answer" && gameState !== "celebrating")) return;
+    if (gameState !== "number_selection" || selectedOperator === null || selectedNumber === null) return;
     
-    setGameState("checking");
-    const correct = elevatorPosition === currentProblem.answer;
-    setIsCorrectAnswer(correct);
+    let calculatedResultFloor: number;
+    if (selectedOperator === '+') {
+      calculatedResultFloor = startFloor + selectedNumber;
+    } else { // '-'
+      calculatedResultFloor = startFloor - selectedNumber;
+    }
+    
+    // Ensure calculated floor is within visual bounds for the elevator display
+    const visuallyBoundedFloor = Math.max(MIN_FLOOR, Math.min(MAX_FLOOR, calculatedResultFloor));
+
+
+    const correct = calculatedResultFloor === targetFloor;
+    setIsAnimatingCorrect(correct);
+    setGameState("animating");
+
+    // Trigger elevator movement to the actual calculated floor (or its bounded version for display)
+    setCurrentElevatorFloor(visuallyBoundedFloor); 
 
     setTimeout(() => {
       if (correct) {
         setScore(prev => prev + 10);
-        setGameState("celebrating");
-      } else {
-        setGameState("incorrect_answer");
       }
 
-      setTimeout(() => {
-        if (questionNumber < TOTAL_QUESTIONS) {
-          const nextQuestionNumber = questionNumber + 1;
-          setQuestionNumber(nextQuestionNumber);
-          const nextDifficulty = Math.min(10, 1 + Math.floor((nextQuestionNumber -1) / 2));
-          setDifficulty(nextDifficulty);
-          fetchNewProblem(nextDifficulty);
-        } else {
-          setGameState("game_over");
-        }
-      }, 1500); // Duration of celebration/incorrect feedback
-    }, 300); // Short delay for "checking" visual if any (like elevator stopping)
+      if (questionNumber < TOTAL_QUESTIONS) {
+        const nextQuestionNumber = questionNumber + 1;
+        setQuestionNumber(nextQuestionNumber);
+        const nextDifficulty = Math.min(10, 1 + Math.floor((nextQuestionNumber - 1) / 2));
+        setDifficulty(nextDifficulty);
+        fetchNewProblem(nextDifficulty); // This will reset states and fetch new problem
+      } else {
+        setGameState("game_over");
+      }
+    }, ANIMATION_AND_FEEDBACK_DURATION);
   };
   
   const renderGameContent = () => {
@@ -104,7 +128,7 @@ export default function GamePage() {
           <div className="flex flex-col items-center justify-center h-full">
             <CardTitle className="text-4xl font-bold mb-4 text-primary">Elevator Math Mania!</CardTitle>
             <CardDescription className="text-lg mb-8 text-center">
-              Help the elevator reach the correct floor by solving math problems. <br />Learn about positive and negative numbers!
+              Help the monkey reach the target floor using math!
             </CardDescription>
             <Button onClick={startGame} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
               <Play className="mr-2 h-6 w-6" /> Start Game
@@ -124,7 +148,7 @@ export default function GamePage() {
             </Button>
           </div>
         );
-      default: // playing, checking, celebrating, incorrect_answer
+      default: // loading_problem, operator_selection, number_selection, animating
         return (
           <>
             <Scoreboard 
@@ -133,33 +157,42 @@ export default function GamePage() {
               totalQuestions={TOTAL_QUESTIONS}
               currentDifficulty={difficulty}
             />
-            <ProblemStatement 
-              problemText={currentProblem ? currentProblem.problem : null} 
-              isLoading={isLoading && !currentProblem} 
+            <ProblemStatement
+              isLoading={gameState === "loading_problem"}
+              startFloor={startFloor}
+              targetFloor={targetFloor}
+              selectedOperator={selectedOperator}
+              selectedNumber={selectedNumber}
+              gameState={gameState}
             />
-            <div className="relative">
+            <div className="relative mt-4 mb-4">
               <ElevatorDisplay 
-                currentElevatorFloor={elevatorPosition} 
+                currentElevatorFloor={currentElevatorFloor} 
                 minFloor={MIN_FLOOR} 
                 maxFloor={MAX_FLOOR}
-                showCorrectIndicator={gameState === "celebrating" || gameState === "incorrect_answer"}
-                isCorrect={isCorrectAnswer}
+                showCorrectIndicator={gameState === "animating"}
+                isCorrect={isAnimatingCorrect}
               />
-               <CelebrationEffect active={gameState === "celebrating"} />
+               <CelebrationEffect active={gameState === "animating" && isAnimatingCorrect} />
             </div>
             <Controls 
-              onMoveUp={() => moveElevator("up")}
-              onMoveDown={() => moveElevator("down")}
+              gameState={gameState}
+              selectedOperator={selectedOperator}
+              selectedNumber={selectedNumber}
+              onOperatorSelect={handleOperatorSelect}
+              onNumberSelect={handleNumberSelect}
               onSubmit={handleSubmitAnswer}
-              selectedFloor={elevatorPosition}
-              disabled={isLoading || gameState === "checking" || gameState === "celebrating" || gameState === "incorrect_answer"}
-              minFloor={MIN_FLOOR}
-              maxFloor={MAX_FLOOR}
             />
           </>
         );
     }
   };
+
+  let footerMessage = "";
+  if (gameState === "operator_selection") footerMessage = "Choose an operation (+ or -).";
+  else if (gameState === "number_selection") footerMessage = "Choose how many floors (1-10).";
+  else if (gameState === "animating") footerMessage = "Whee! Checking your answer...";
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground">
@@ -169,12 +202,12 @@ export default function GamePage() {
             Elevator Math Mania
           </h1>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-6 min-h-[450px] flex flex-col justify-between">
           {renderGameContent()}
         </CardContent>
-        { (gameState !== "initial" && gameState !== "game_over") &&
-          <CardFooter className="text-xs text-muted-foreground justify-center pb-4">
-            Move the elevator and submit your answer!
+        { (gameState === "operator_selection" || gameState === "number_selection" || gameState === "animating") &&
+          <CardFooter className="text-xs text-muted-foreground justify-center pb-4 pt-2">
+            {footerMessage}
           </CardFooter>
         }
       </Card>
