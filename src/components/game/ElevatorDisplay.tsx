@@ -6,9 +6,9 @@ type MonkeyPosition = 'hidden' | 'entering' | 'inside' | 'exiting';
 type MonkeyEmotion = 'neutral' | 'happy' | 'confused';
 
 interface ElevatorDisplayProps {
-  currentElevatorFloor: number; // This is the actual floor the elevator is on or going to
-  minFloor: number; // The minimum floor label to display
-  maxFloor: number; // The maximum floor label to display
+  currentElevatorFloor: number; 
+  minFloor: number; // The minimum floor label to display (dynamic)
+  maxFloor: number; // The maximum floor label to display (dynamic)
   monkeyPosition: MonkeyPosition;
   monkeyEmotion: MonkeyEmotion;
   isElevatorMoving: boolean;
@@ -17,6 +17,8 @@ interface ElevatorDisplayProps {
 const FLOOR_HEIGHT_REM = 2; // h-8 (2rem = 32px)
 const MONKEY_SIZE_REM = 1.75; // For w-7 h-7
 const SHAFT_WIDTH_REM = 12; 
+const ELEVATOR_SHAFT_VISIBLE_FLOORS = 11; // Should match VIEWPORT_TOTAL_FLOORS in page.tsx
+const SHAFT_TOTAL_HEIGHT_REM = ELEVATOR_SHAFT_VISIBLE_FLOORS * FLOOR_HEIGHT_REM; // 11 * 2 = 22rem
 
 // Simple Monkey SVG
 const MonkeySvg: React.FC<{ emotion: MonkeyEmotion, className?: string }> = ({ emotion, className }) => (
@@ -61,23 +63,17 @@ const MonkeySvg: React.FC<{ emotion: MonkeyEmotion, className?: string }> = ({ e
 
 
 const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
-  currentElevatorFloor, // Actual floor of the elevator
-  minFloor: displayMinFloor, // Min floor label for display
-  maxFloor: displayMaxFloor, // Max floor label for display
+  currentElevatorFloor, 
+  minFloor: displayMinFloor, 
+  maxFloor: displayMaxFloor, 
   monkeyPosition,
   monkeyEmotion,
   isElevatorMoving,
 }) => {
-  // displayableFloors are the labels shown on the shaft
   const displayableFloors = Array.from({ length: displayMaxFloor - displayMinFloor + 1 }, (_, i) => displayMaxFloor - i);
   
-  // Calculate elevator car's top position based on its actual currentElevatorFloor
-  // relative to the displayMaxFloor (which acts as the visual '0' point for 'top' styling).
   const elevatorCarTopPositionRem = (displayMaxFloor - currentElevatorFloor) * FLOOR_HEIGHT_REM;
-  // No longer bounding the elevator car to the visible shaft height.
-  // It will be positioned correctly and `overflow: hidden` on the parent will clip it.
 
-  // Monkey positioning
   let monkeyTopRem = elevatorCarTopPositionRem + (FLOOR_HEIGHT_REM - MONKEY_SIZE_REM) / 2;
   let monkeyLeftRem = (SHAFT_WIDTH_REM / 2) - (MONKEY_SIZE_REM / 2) ; 
   let monkeyOpacity = 0;
@@ -89,7 +85,6 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
     monkeyLeftRem = -MONKEY_SIZE_REM * 1.5; 
   } else if (monkeyPosition === 'inside') {
     monkeyOpacity = 1;
-    // monkeyLeftRem and monkeyTopRem are already set for inside the car
   } else if (monkeyPosition === 'exiting') {
     monkeyOpacity = 1;
     monkeyLeftRem = SHAFT_WIDTH_REM + MONKEY_SIZE_REM * 0.5; 
@@ -110,10 +105,14 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
 
 
   return (
-    <div className={cn(
-        "relative h-[34rem] bg-secondary/30 rounded-lg shadow-inner border-2 border-primary/50 overflow-hidden"
-      )}
-      style={{width: `${SHAFT_WIDTH_REM}rem`}}
+    <div 
+        className={cn(
+            "relative bg-secondary/30 rounded-lg shadow-inner border-2 border-primary/50 overflow-hidden"
+          )}
+        style={{
+            width: `${SHAFT_WIDTH_REM}rem`,
+            height: `${SHAFT_TOTAL_HEIGHT_REM}rem`
+        }}
     >
       {/* Monkey */}
       <div
@@ -134,13 +133,11 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
         )}
         style={{
           height: `${FLOOR_HEIGHT_REM - 0.25}rem`, 
-          top: `${elevatorCarTopPositionRem}rem`, // Use the unbounded position
+          top: `${elevatorCarTopPositionRem}rem`,
           zIndex: 10,
         }}
         aria-label={`Elevator at floor ${currentElevatorFloor}`}
       >
-        {/* Display the actual current floor on the elevator car if needed, or use ARIA label primarily */}
-        {/* <span className="text-xs text-primary-foreground font-bold">{currentElevatorFloor}</span> */}
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M12 3v18m-3-3l3 3 3-3m-3-12l-3 3 3 3"/></svg>
       </div>
 
@@ -156,7 +153,7 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
             style={{ height: `${FLOOR_HEIGHT_REM}rem` }}
             aria-label={`Floor ${floorNum}`}
           >
-            <span className={cn("ml-2", floorNum === currentElevatorFloor && floorNum >= displayMinFloor && floorNum <= displayMaxFloor && "text-primary font-bold scale-110")}>{floorNum}</span>
+            <span className={cn("ml-2", floorNum === currentElevatorFloor && "text-primary font-bold scale-110")}>{floorNum}</span>
           </div>
         ))}
       </div>
