@@ -35,15 +35,24 @@ const Controls: React.FC<ControlsProps> = ({
   onSubmit,
 }) => {
   const { t } = useLocale();
-  const disableOperatorButtons = gameState !== "operator_selection";
-  const disableNumberButtons = gameState !== "number_selection";
-  const disableSubmitButton = gameState !== "number_selection" || selectedNumber === null || selectedOperator === null;
+  
+  const isAnimatingOrLoading = 
+    gameState === "loading_problem" ||
+    gameState === "monkey_entering" ||
+    gameState === "elevator_moving" ||
+    gameState === "monkey_exiting";
+
+  const disableOperatorButtons = isAnimatingOrLoading || gameState === "initial" || gameState === "game_over";
+  const disableNumberButtons = isAnimatingOrLoading || selectedOperator === null || gameState === "operator_selection" || gameState === "initial" || gameState === "game_over";
+  const disableSubmitButton = isAnimatingOrLoading || selectedOperator === null || selectedNumber === null || gameState !== "number_selection";
   
   const showControls = 
     gameState === "operator_selection" || 
     gameState === "number_selection" ||
     gameState === "elevator_moving" || 
-    gameState === "monkey_exiting";
+    gameState === "monkey_exiting" ||
+    gameState === "loading_problem" || // Keep controls visible but disabled during loading
+    gameState === "monkey_entering";
 
   if (!showControls) {
     return null; 

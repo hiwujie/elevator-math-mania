@@ -4,26 +4,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { RefreshCw, Play, Languages } from 'lucide-react'; // Added Languages icon
+import { RefreshCw, Play } from 'lucide-react';
 
 import Scoreboard from '@/components/game/Scoreboard';
 import ProblemStatement from '@/components/game/ProblemStatement';
 import ElevatorDisplay from '@/components/game/ElevatorDisplay';
 import Controls from '@/components/game/Controls';
 import CelebrationEffect from '@/components/game/CelebrationEffect';
-import { useLocale, type Locale } from '@/context/i18n'; // Import useLocale
+import { useLocale, type Locale } from '@/context/i18n';
 
-const MIN_FLOOR = -10; 
-const MAX_FLOOR = 10;  
+const MIN_FLOOR_LOGIC = -10; // Min/max for problem logic
+const MAX_FLOOR_LOGIC = 10;
+const MIN_FLOOR_DISPLAY = -10; // Min/max for actual elevator shaft rendering
+const MAX_FLOOR_DISPLAY = 10;
 const TOTAL_QUESTIONS = 10;
 
-const MONKEY_ENTER_DURATION = 1000; 
-const ELEVATOR_MOVE_DURATION = 1500; 
-const MONKEY_EXIT_EMOTE_DURATION = 1500; 
+const MONKEY_ENTER_DURATION = 1000;
+const ELEVATOR_MOVE_DURATION = 1500;
+const MONKEY_EXIT_EMOTE_DURATION = 1500;
 
 type GameState =
   | "initial"
-  | "loading_problem" 
+  | "loading_problem"
   | "monkey_entering"
   | "operator_selection"
   | "number_selection"
@@ -42,7 +44,7 @@ interface AlgorithmicProblem {
 function generateProblemAlgorithmically(difficulty: number): AlgorithmicProblem {
   let startFloor: number;
   let targetFloor: number;
-  
+
   let level: 1 | 2 | 3;
   if (difficulty <= 3) level = 1;
   else if (difficulty <= 6) level = 2;
@@ -53,38 +55,41 @@ function generateProblemAlgorithmically(difficulty: number): AlgorithmicProblem 
     attempts++;
     if (attempts > 200) {
       startFloor = 0;
-      targetFloor = Math.floor(Math.random() * 5) + 1; 
-      targetFloor = Math.min(targetFloor, MAX_FLOOR);
+      targetFloor = Math.floor(Math.random() * 5) + 1;
+      targetFloor = Math.min(targetFloor, MAX_FLOOR_LOGIC);
       console.error("Problem generator reached max attempts. Using simple fallback.", {startFloor, targetFloor});
-      if (startFloor === targetFloor && targetFloor < MAX_FLOOR) targetFloor++;
-      else if (startFloor === targetFloor && targetFloor > MIN_FLOOR) targetFloor--;
+      if (startFloor === targetFloor && targetFloor < MAX_FLOOR_LOGIC) targetFloor++;
+      else if (startFloor === targetFloor && targetFloor > MIN_FLOOR_LOGIC) targetFloor--;
       break;
     }
 
-    const potentialDifference = Math.floor(Math.random() * 10) + 1; 
+    const potentialDifference = Math.floor(Math.random() * 10) + 1;
 
-    if (level === 1) { 
-      startFloor = Math.floor(Math.random() * 10); 
-      if (Math.random() < 0.5) targetFloor = startFloor + potentialDifference; 
-      else targetFloor = startFloor - potentialDifference; 
+    if (level === 1) {
+      startFloor = Math.floor(Math.random() * 10); // 0 to 9
+      if (Math.random() < 0.5) targetFloor = startFloor + potentialDifference;
+      else targetFloor = startFloor - potentialDifference;
 
-      if (targetFloor >= 0 && targetFloor <= MAX_FLOOR && startFloor !== targetFloor) {
+      // Ensure targetFloor >= 0 for Level 1 and within general bounds
+      if (targetFloor >= 0 && targetFloor <= MAX_FLOOR_LOGIC && startFloor !== targetFloor) {
         break;
       }
-    } else if (level === 2) { 
-      startFloor = Math.floor(Math.random() * 19) - 9; 
+    } else if (level === 2) {
+      // Numbers involved < 10 (e.g. start 0-9, diff 1-9, or start -9 to 0, diff 1-9)
+      // Target can be < 0
+      startFloor = Math.floor(Math.random() * 19) - 9; // -9 to 9
       if (Math.random() < 0.5) targetFloor = startFloor + potentialDifference;
       else targetFloor = startFloor - potentialDifference;
 
-      if (targetFloor >= MIN_FLOOR && targetFloor <= MAX_FLOOR && startFloor !== targetFloor) {
+      if (targetFloor >= MIN_FLOOR_LOGIC && targetFloor <= MAX_FLOOR_LOGIC && startFloor !== targetFloor) {
          break;
       }
-    } else { 
-      startFloor = Math.floor(Math.random() * (MAX_FLOOR - MIN_FLOOR + 1)) + MIN_FLOOR; 
+    } else { // Level 3: 20以内加减法 (interpreted as numbers up to +/-10 for start/target for display)
+      startFloor = Math.floor(Math.random() * (MAX_FLOOR_LOGIC - MIN_FLOOR_LOGIC + 1)) + MIN_FLOOR_LOGIC; // -10 to 10
       if (Math.random() < 0.5) targetFloor = startFloor + potentialDifference;
       else targetFloor = startFloor - potentialDifference;
-      
-      if (targetFloor >= MIN_FLOOR && targetFloor <= MAX_FLOOR && startFloor !== targetFloor) {
+
+      if (targetFloor >= MIN_FLOOR_LOGIC && targetFloor <= MAX_FLOOR_LOGIC && startFloor !== targetFloor) {
         break;
       }
     }
@@ -94,16 +99,16 @@ function generateProblemAlgorithmically(difficulty: number): AlgorithmicProblem 
 
 
 export default function GamePage() {
-  const { locale, setLocale, t } = useLocale(); // Get i18n context
+  const { locale, setLocale, t } = useLocale();
 
   const [gameState, setGameState] = useState<GameState>("initial");
-  
+
   const [startFloor, setStartFloor] = useState<number>(0);
   const [targetFloor, setTargetFloor] = useState<number>(0);
   const [selectedOperator, setSelectedOperator] = useState<'+' | '-' | null>(null);
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
-  
-  const [currentElevatorFloor, setCurrentElevatorFloor] = useState<number>(0); 
+
+  const [currentElevatorFloor, setCurrentElevatorFloor] = useState<number>(0);
 
   const [monkeyPosition, setMonkeyPosition] = useState<MonkeyPosition>('hidden');
   const [monkeyEmotion, setMonkeyEmotion] = useState<MonkeyEmotion>('neutral');
@@ -112,10 +117,8 @@ export default function GamePage() {
   const [score, setScore] = useState<number>(0);
   const [questionNumber, setQuestionNumber] = useState<number>(0);
   const [difficulty, setDifficulty] = useState<number>(1);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const fetchNewProblem = useCallback(async (newDifficulty: number) => {
-    setIsLoading(true); 
     setGameState("loading_problem");
     setSelectedOperator(null);
     setSelectedNumber(null);
@@ -123,26 +126,22 @@ export default function GamePage() {
     setMonkeyEmotion('neutral');
     setShowCelebration(false);
 
-    try {
-      const problemData = generateProblemAlgorithmically(newDifficulty); 
-      setStartFloor(problemData.startFloor);
-      setTargetFloor(problemData.targetFloor);
-      setCurrentElevatorFloor(problemData.startFloor);
-      
-      setGameState("monkey_entering");
-      setMonkeyPosition('entering');
+    // Simulate loading for monkey entrance
+    await new Promise(resolve => setTimeout(resolve, 100)); // Short delay before problem "appears"
 
-      setTimeout(() => {
-        setMonkeyPosition('inside');
-        setIsLoading(false); 
-        setGameState("operator_selection");
-      }, MONKEY_ENTER_DURATION);
+    const problemData = generateProblemAlgorithmically(newDifficulty);
+    setStartFloor(problemData.startFloor);
+    setTargetFloor(problemData.targetFloor);
+    setCurrentElevatorFloor(problemData.startFloor);
 
-    } catch (error) {
-      console.error("Failed to generate math problem:", error);
-      setGameState("initial"); 
-      setIsLoading(false);
-    }
+    setGameState("monkey_entering");
+    setMonkeyPosition('entering');
+
+    setTimeout(() => {
+      setMonkeyPosition('inside');
+      setGameState("operator_selection");
+    }, MONKEY_ENTER_DURATION);
+
   }, []);
 
   const startGame = () => {
@@ -154,44 +153,45 @@ export default function GamePage() {
   };
 
   const handleOperatorSelect = (operator: '+' | '-') => {
-    if (gameState === "operator_selection") {
+    // Allow changing operator even if a number was previously selected
+    if (gameState === "operator_selection" || gameState === "number_selection") {
       setSelectedOperator(operator);
-      setGameState("number_selection");
+      setGameState("number_selection"); // Ensure state is number_selection to enable number buttons
     }
   };
 
   const handleNumberSelect = (number: number) => {
-    if (gameState === "number_selection") {
+    if (gameState === "number_selection" && selectedOperator !== null) {
       setSelectedNumber(number);
+      // gameState remains "number_selection"
     }
   };
 
   const handleSubmitAnswer = () => {
     if (gameState !== "number_selection" || selectedOperator === null || selectedNumber === null) return;
-    
+
     let calculatedResultFloor: number;
     if (selectedOperator === '+') {
       calculatedResultFloor = startFloor + selectedNumber;
-    } else { 
+    } else {
       calculatedResultFloor = startFloor - selectedNumber;
     }
-    
-    const visuallyBoundedResultFloor = Math.max(MIN_FLOOR, Math.min(MAX_FLOOR, calculatedResultFloor));
+
     const correct = calculatedResultFloor === targetFloor;
 
     setGameState("elevator_moving");
-    setCurrentElevatorFloor(visuallyBoundedResultFloor); 
+    setCurrentElevatorFloor(calculatedResultFloor); // Use the actual calculated floor
 
     setTimeout(() => {
-      setGameState("monkey_exiting"); 
+      setGameState("monkey_exiting"); // This state is temporary for the emote duration
       if (correct) {
         setMonkeyPosition('exiting');
         setMonkeyEmotion('happy');
         setShowCelebration(true);
       } else {
-        setMonkeyPosition('inside'); 
+        setMonkeyPosition('inside'); // Monkey stays inside if wrong
         setMonkeyEmotion('confused');
-        setShowCelebration(false); 
+        setShowCelebration(false);
       }
 
       setTimeout(() => {
@@ -200,17 +200,17 @@ export default function GamePage() {
 
         if (correct) {
           setScore(prev => prev + 10);
-          nextProblemDifficulty = Math.min(10, difficulty + 1);
-          setDifficulty(nextProblemDifficulty);
+          nextProblemDifficulty = Math.min(10, difficulty + 1); // Increase difficulty
+        } else {
+          // Difficulty remains the same if incorrect
         }
-        // If incorrect, nextProblemDifficulty remains the current 'difficulty'
-        // and the 'difficulty' state is not changed, so the player stays at the same level.
+        setDifficulty(nextProblemDifficulty);
 
 
         if (questionNumber < TOTAL_QUESTIONS) {
           const nextQuestionNumber = questionNumber + 1;
           setQuestionNumber(nextQuestionNumber);
-          fetchNewProblem(nextProblemDifficulty); 
+          fetchNewProblem(nextProblemDifficulty);
         } else {
           setGameState("game_over");
           setMonkeyPosition('hidden');
@@ -218,7 +218,7 @@ export default function GamePage() {
       }, MONKEY_EXIT_EMOTE_DURATION);
     }, ELEVATOR_MOVE_DURATION);
   };
-  
+
   const renderGameContent = () => {
     switch (gameState) {
       case "initial":
@@ -248,18 +248,19 @@ export default function GamePage() {
             </Button>
           </div>
         );
-      default: 
+      default:
         const showProblem = gameState === "operator_selection" || gameState === "number_selection" || gameState === "elevator_moving" || gameState === "monkey_exiting";
+        const isLoadingProblem = gameState === "loading_problem" || gameState === "monkey_entering";
         return (
           <>
-            <Scoreboard 
-              score={score} 
-              questionNumber={questionNumber} 
+            <Scoreboard
+              score={score}
+              questionNumber={questionNumber}
               totalQuestions={TOTAL_QUESTIONS}
               currentDifficulty={difficulty}
             />
             <ProblemStatement
-              isLoading={gameState === "loading_problem" || gameState === "monkey_entering" || !showProblem}
+              isLoading={isLoadingProblem || !showProblem}
               startFloor={startFloor}
               targetFloor={targetFloor}
               selectedOperator={selectedOperator}
@@ -270,8 +271,8 @@ export default function GamePage() {
               <div className="relative">
                 <ElevatorDisplay
                   currentElevatorFloor={currentElevatorFloor}
-                  minFloor={MIN_FLOOR} 
-                  maxFloor={MAX_FLOOR} 
+                  minFloor={MIN_FLOOR_DISPLAY}
+                  maxFloor={MAX_FLOOR_DISPLAY}
                   monkeyPosition={monkeyPosition}
                   monkeyEmotion={monkeyEmotion}
                   isElevatorMoving={gameState === "elevator_moving"}
@@ -304,7 +305,7 @@ export default function GamePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground">
       <Card className="w-full max-w-3xl shadow-2xl rounded-xl overflow-hidden">
-        <CardHeader className="bg-primary/10 pb-4 pt-6 text-center relative"> {/* Added relative for positioning switcher */}
+        <CardHeader className="bg-primary/10 pb-4 pt-6 text-center relative">
            <h1 className="text-3xl font-bold text-primary tracking-tight">
             {t('page.mainTitle')}
           </h1>
@@ -332,7 +333,7 @@ export default function GamePage() {
         </CardContent>
         { (gameState !== "initial" && gameState !== "game_over") &&
           <CardFooter className="text-xs text-muted-foreground justify-center pb-4 pt-2">
-            {footerMessage || <>&nbsp;</>} 
+            {footerMessage || <>&nbsp;</>}
           </CardFooter>
         }
       </Card>

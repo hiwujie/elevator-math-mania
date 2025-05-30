@@ -6,9 +6,9 @@ type MonkeyPosition = 'hidden' | 'entering' | 'inside' | 'exiting';
 type MonkeyEmotion = 'neutral' | 'happy' | 'confused';
 
 interface ElevatorDisplayProps {
-  currentElevatorFloor: number;
-  minFloor: number; 
-  maxFloor: number; 
+  currentElevatorFloor: number; // This is the actual floor the elevator is on or going to
+  minFloor: number; // The minimum floor label to display
+  maxFloor: number; // The maximum floor label to display
   monkeyPosition: MonkeyPosition;
   monkeyEmotion: MonkeyEmotion;
   isElevatorMoving: boolean;
@@ -16,7 +16,7 @@ interface ElevatorDisplayProps {
 
 const FLOOR_HEIGHT_REM = 2; // h-8 (2rem = 32px)
 const MONKEY_SIZE_REM = 1.75; // For w-7 h-7
-const SHAFT_WIDTH_REM = 12; // w-48. Changed from mx-auto, now part of flex
+const SHAFT_WIDTH_REM = 12; 
 
 // Simple Monkey SVG
 const MonkeySvg: React.FC<{ emotion: MonkeyEmotion, className?: string }> = ({ emotion, className }) => (
@@ -61,51 +61,51 @@ const MonkeySvg: React.FC<{ emotion: MonkeyEmotion, className?: string }> = ({ e
 
 
 const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
-  currentElevatorFloor,
-  minFloor,
-  maxFloor,
+  currentElevatorFloor, // Actual floor of the elevator
+  minFloor: displayMinFloor, // Min floor label for display
+  maxFloor: displayMaxFloor, // Max floor label for display
   monkeyPosition,
   monkeyEmotion,
   isElevatorMoving,
 }) => {
-  const displayableFloors = Array.from({ length: maxFloor - minFloor + 1 }, (_, i) => maxFloor - i);
+  // displayableFloors are the labels shown on the shaft
+  const displayableFloors = Array.from({ length: displayMaxFloor - displayMinFloor + 1 }, (_, i) => displayMaxFloor - i);
   
-  const elevatorCarTopPositionRem = (maxFloor - currentElevatorFloor) * FLOOR_HEIGHT_REM;
-  const boundedElevatorCarTopRem = Math.max(
-    0, 
-    Math.min(elevatorCarTopPositionRem, (displayableFloors.length - 1) * FLOOR_HEIGHT_REM)
-  );
+  // Calculate elevator car's top position based on its actual currentElevatorFloor
+  // relative to the displayMaxFloor (which acts as the visual '0' point for 'top' styling).
+  const elevatorCarTopPositionRem = (displayMaxFloor - currentElevatorFloor) * FLOOR_HEIGHT_REM;
+  // No longer bounding the elevator car to the visible shaft height.
+  // It will be positioned correctly and `overflow: hidden` on the parent will clip it.
 
   // Monkey positioning
-  let monkeyTopRem = boundedElevatorCarTopRem + (FLOOR_HEIGHT_REM - MONKEY_SIZE_REM) / 2; // Center monkey in car vertically
-  let monkeyLeftRem = (SHAFT_WIDTH_REM / 2) - (MONKEY_SIZE_REM / 2) ; // Center monkey in shaft horizontally
+  let monkeyTopRem = elevatorCarTopPositionRem + (FLOOR_HEIGHT_REM - MONKEY_SIZE_REM) / 2;
+  let monkeyLeftRem = (SHAFT_WIDTH_REM / 2) - (MONKEY_SIZE_REM / 2) ; 
   let monkeyOpacity = 0;
 
   if (monkeyPosition === 'hidden') {
     monkeyOpacity = 0;
   } else if (monkeyPosition === 'entering') {
     monkeyOpacity = 1;
-    monkeyLeftRem = -MONKEY_SIZE_REM * 1.5; // Start outside to the left
-    // Target is centered, CSS transition will handle movement to 'inside' state style
+    monkeyLeftRem = -MONKEY_SIZE_REM * 1.5; 
   } else if (monkeyPosition === 'inside') {
     monkeyOpacity = 1;
     // monkeyLeftRem and monkeyTopRem are already set for inside the car
   } else if (monkeyPosition === 'exiting') {
     monkeyOpacity = 1;
-    monkeyLeftRem = SHAFT_WIDTH_REM + MONKEY_SIZE_REM * 0.5; // Exit to the right
+    monkeyLeftRem = SHAFT_WIDTH_REM + MONKEY_SIZE_REM * 0.5; 
   }
   
   const monkeyStyle: React.CSSProperties = {
     top: `${monkeyTopRem}rem`,
-    left: monkeyPosition === 'entering' && !isElevatorMoving ? `${(SHAFT_WIDTH_REM / 2) - (MONKEY_SIZE_REM / 2)}rem` : `${monkeyLeftRem}rem`, // Target for entering
+    left: monkeyPosition === 'entering' && !isElevatorMoving ? `${(SHAFT_WIDTH_REM / 2) - (MONKEY_SIZE_REM / 2)}rem` : `${monkeyLeftRem}rem`,
     width: `${MONKEY_SIZE_REM}rem`,
     height: `${MONKEY_SIZE_REM}rem`,
     opacity: monkeyOpacity,
     transition: `top ${isElevatorMoving ? '0.5s' : '0s'} ease-in-out, left 0.7s ease-in-out, opacity 0.5s ease-in-out`,
-    zIndex: 15, // Above elevator car
+    zIndex: 15,
   };
-  if (monkeyPosition === 'entering' && isElevatorMoving) { // Should not happen, but safe
-     monkeyStyle.transition = `top 0.5s ease-in-out, opacity 0.5s ease-in-out`; // No left transition if moving with elevator
+  if (monkeyPosition === 'entering' && isElevatorMoving) { 
+     monkeyStyle.transition = `top 0.5s ease-in-out, opacity 0.5s ease-in-out`;
   }
 
 
@@ -119,8 +119,6 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
       <div
         className={cn(
             "absolute",
-            // Shake animation is applied if monkey is confused.
-            // This will typically happen when monkeyPosition is 'inside' during the result display phase.
             monkeyEmotion === 'confused' && "animate-shake" 
         )}
         style={monkeyStyle}
@@ -136,11 +134,13 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
         )}
         style={{
           height: `${FLOOR_HEIGHT_REM - 0.25}rem`, 
-          top: `${boundedElevatorCarTopRem}rem`,
+          top: `${elevatorCarTopPositionRem}rem`, // Use the unbounded position
           zIndex: 10,
         }}
         aria-label={`Elevator at floor ${currentElevatorFloor}`}
       >
+        {/* Display the actual current floor on the elevator car if needed, or use ARIA label primarily */}
+        {/* <span className="text-xs text-primary-foreground font-bold">{currentElevatorFloor}</span> */}
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M12 3v18m-3-3l3 3 3-3m-3-12l-3 3 3 3"/></svg>
       </div>
 
@@ -156,7 +156,7 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
             style={{ height: `${FLOOR_HEIGHT_REM}rem` }}
             aria-label={`Floor ${floorNum}`}
           >
-            <span className={cn("ml-2", floorNum === currentElevatorFloor && "text-primary font-bold scale-110")}>{floorNum}</span>
+            <span className={cn("ml-2", floorNum === currentElevatorFloor && floorNum >= displayMinFloor && floorNum <= displayMaxFloor && "text-primary font-bold scale-110")}>{floorNum}</span>
           </div>
         ))}
       </div>
@@ -165,4 +165,3 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
 };
 
 export default ElevatorDisplay;
-
