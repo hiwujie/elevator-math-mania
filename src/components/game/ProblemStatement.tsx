@@ -6,13 +6,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 type GameState =
   | "initial"
   | "loading_problem"
+  | "monkey_entering"
   | "operator_selection"
   | "number_selection"
-  | "animating"
+  | "elevator_moving"
+  | "monkey_exiting"
   | "game_over";
 
 interface ProblemStatementProps {
-  isLoading: boolean;
+  isLoading: boolean; // True during AI call or monkey_entering
   startFloor: number;
   targetFloor: number;
   selectedOperator: '+' | '-' | null;
@@ -30,10 +32,12 @@ const ProblemStatement: React.FC<ProblemStatementProps> = ({
 }) => {
   
   let problemString = "";
+  const showSkeleton = isLoading || gameState === "loading_problem" || gameState === "monkey_entering";
 
-  if (isLoading || gameState === "loading_problem" || gameState === "initial") {
-    problemString = "Loading problem...";
+  if (showSkeleton) {
+    problemString = "Loading problem..."; // Placeholder, skeleton will be shown
   } else {
+    // gameState is operator_selection, number_selection, elevator_moving, or monkey_exiting
     const operatorDisplay = selectedOperator ?? '?';
     const numberDisplay = selectedNumber !== null ? selectedNumber : '?';
 
@@ -45,11 +49,11 @@ const ProblemStatement: React.FC<ProblemStatementProps> = ({
       } else {
         problemString = `${startFloor} ${selectedOperator} ? = ${targetFloor}`;
       }
-    } else if (gameState === "animating" && selectedOperator && selectedNumber !== null) {
-      // Show the completed equation during animation
+    } else if ((gameState === "elevator_moving" || gameState === "monkey_exiting") && selectedOperator && selectedNumber !== null) {
+      // Show the completed equation during animation and exit
       problemString = `${startFloor} ${selectedOperator} ${selectedNumber} = ${targetFloor}`;
     } else {
-        // Fallback or default problem string if needed
+        // Fallback for any other active game state before selections are made
         problemString = `${startFloor} ? ? = ${targetFloor}`;
     }
   }
@@ -58,12 +62,16 @@ const ProblemStatement: React.FC<ProblemStatementProps> = ({
   return (
     <Card className="mb-6 text-center shadow-md">
       <CardHeader className="pb-2 pt-4">
-        <CardTitle className="text-xl md:text-2xl font-bold text-primary">Monkey at Floor {startFloor} wants to go to Floor {targetFloor}</CardTitle>
+        {showSkeleton ? (
+            <Skeleton className="h-7 w-3/4 mx-auto" />
+        ) : (
+            <CardTitle className="text-xl md:text-2xl font-bold text-primary">Monkey at Floor {startFloor} wants to go to Floor {targetFloor}</CardTitle>
+        )}
       </CardHeader>
       <CardContent className="pt-2 pb-4">
-        {isLoading || gameState === "loading_problem" ? (
+        {showSkeleton ? (
           <div className="space-y-2">
-            <Skeleton className="h-10 w-3/4 mx-auto" />
+            <Skeleton className="h-10 w-1/2 mx-auto" />
           </div>
         ) : (
           <p className="text-3xl md:text-4xl font-mono font-semibold text-foreground">

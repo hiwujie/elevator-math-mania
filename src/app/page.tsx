@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { generateMathProblem, type GenerateMathProblemOutput } from '@/ai/flows/generate-math-problem';
+import { generateMathProblem } from '@/ai/flows/generate-math-problem';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, Play } from 'lucide-react';
@@ -16,15 +16,23 @@ import CelebrationEffect from '@/components/game/CelebrationEffect';
 const MIN_FLOOR = -10; // Min possible floor value overall
 const MAX_FLOOR = 10;  // Max possible floor value overall
 const TOTAL_QUESTIONS = 10;
-const ANIMATION_AND_FEEDBACK_DURATION = 2000; // ms
+
+const MONKEY_ENTER_DURATION = 1000; // ms
+const ELEVATOR_MOVE_DURATION = 1500; // ms
+const MONKEY_EXIT_EMOTE_DURATION = 1500; // ms
 
 type GameState =
   | "initial"
-  | "loading_problem"
-  | "operator_selection"
-  | "number_selection"
-  | "animating"
+  | "loading_problem" // AI Call
+  | "monkey_entering"   // Monkey walking to elevator
+  | "operator_selection"// Problem shown, player action
+  | "number_selection"  // Player action
+  | "elevator_moving"   // Elevator car moving
+  | "monkey_exiting"    // Monkey walking out, showing emotion
   | "game_over";
+
+type MonkeyPosition = 'hidden' | 'entering' | 'inside' | 'exiting';
+type MonkeyEmotion = 'neutral' | 'happy' | 'confused';
 
 export default function GamePage() {
   const [gameState, setGameState] = useState<GameState>("initial");
@@ -34,31 +42,46 @@ export default function GamePage() {
   const [selectedOperator, setSelectedOperator] = useState<'+' | '-' | null>(null);
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   
-  const [currentElevatorFloor, setCurrentElevatorFloor] = useState<number>(0); // Actual elevator car position
-  const [isAnimatingCorrect, setIsAnimatingCorrect] = useState<boolean>(false); // For feedback during animation
+  const [currentElevatorFloor, setCurrentElevatorFloor] = useState<number>(0); 
+
+  const [monkeyPosition, setMonkeyPosition] = useState<MonkeyPosition>('hidden');
+  const [monkeyEmotion, setMonkeyEmotion] = useState<MonkeyEmotion>('neutral');
+  const [showCelebration, setShowCelebration] = useState<boolean>(false);
 
   const [score, setScore] = useState<number>(0);
   const [questionNumber, setQuestionNumber] = useState<number>(0);
   const [difficulty, setDifficulty] = useState<number>(1);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false); // For general loading/AI call
 
   const fetchNewProblem = useCallback(async (newDifficulty: number) => {
     setIsLoading(true);
     setGameState("loading_problem");
     setSelectedOperator(null);
     setSelectedNumber(null);
+    setMonkeyPosition('hidden'); // Ensure monkey is hidden before starting
+    setMonkeyEmotion('neutral');
+    setShowCelebration(false);
+
     try {
       const problemData = await generateMathProblem({ difficulty: newDifficulty });
       setStartFloor(problemData.startFloor);
       setTargetFloor(problemData.targetFloor);
-      setCurrentElevatorFloor(problemData.startFloor); // Elevator starts at the startFloor
-      setGameState("operator_selection");
+      setCurrentElevatorFloor(problemData.startFloor); // Elevator car is at startFloor
+      
+      setGameState("monkey_entering");
+      setMonkeyPosition('entering'); // Start monkey entering animation
+
+      setTimeout(() => {
+        setMonkeyPosition('inside');
+        setIsLoading(false); // Problem is ready
+        setGameState("operator_selection");
+      }, MONKEY_ENTER_DURATION);
+
     } catch (error) {
       console.error("Failed to generate math problem:", error);
-      // TODO: Show user friendly error
       setGameState("initial"); 
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const startGame = () => {
@@ -79,7 +102,6 @@ export default function GamePage() {
   const handleNumberSelect = (number: number) => {
     if (gameState === "number_selection") {
       setSelectedNumber(number);
-      // ProblemStatement will update based on this. User submits next.
     }
   };
 
@@ -93,32 +115,40 @@ export default function GamePage() {
       calculatedResultFloor = startFloor - selectedNumber;
     }
     
-    // Ensure calculated floor is within visual bounds for the elevator display
-    const visuallyBoundedFloor = Math.max(MIN_FLOOR, Math.min(MAX_FLOOR, calculatedResultFloor));
-
-
+    const visuallyBoundedResultFloor = Math.max(MIN_FLOOR, Math.min(MAX_FLOOR, calculatedResultFloor));
     const correct = calculatedResultFloor === targetFloor;
-    setIsAnimatingCorrect(correct);
-    setGameState("animating");
 
-    // Trigger elevator movement to the actual calculated floor (or its bounded version for display)
-    setCurrentElevatorFloor(visuallyBoundedFloor); 
+    setGameState("elevator_moving");
+    // Monkey is already 'inside', will move with elevator
+    setCurrentElevatorFloor(visuallyBoundedResultFloor); 
 
-    setTimeout(() => {
+    setTimeout(() => { // After elevator movement
+      setGameState("monkey_exiting");
+      setMonkeyPosition('exiting');
+      setMonkeyEmotion(correct ? 'happy' : 'confused');
       if (correct) {
-        setScore(prev => prev + 10);
+        setShowCelebration(true);
       }
 
-      if (questionNumber < TOTAL_QUESTIONS) {
-        const nextQuestionNumber = questionNumber + 1;
-        setQuestionNumber(nextQuestionNumber);
-        const nextDifficulty = Math.min(10, 1 + Math.floor((nextQuestionNumber - 1) / 2));
-        setDifficulty(nextDifficulty);
-        fetchNewProblem(nextDifficulty); // This will reset states and fetch new problem
-      } else {
-        setGameState("game_over");
-      }
-    }, ANIMATION_AND_FEEDBACK_DURATION);
+      setTimeout(() => { // After monkey exit and emotion display
+        setShowCelebration(false);
+        if (correct) {
+          setScore(prev => prev + 10);
+        }
+
+        if (questionNumber < TOTAL_QUESTIONS) {
+          const nextQuestionNumber = questionNumber + 1;
+          setQuestionNumber(nextQuestionNumber);
+          const nextDifficulty = Math.min(10, 1 + Math.floor((nextQuestionNumber - 1) / 2));
+          setDifficulty(nextDifficulty);
+          // fetchNewProblem will reset monkeyPosition to 'hidden' then 'entering'
+          fetchNewProblem(nextDifficulty); 
+        } else {
+          setGameState("game_over");
+          setMonkeyPosition('hidden');
+        }
+      }, MONKEY_EXIT_EMOTE_DURATION);
+    }, ELEVATOR_MOVE_DURATION);
   };
   
   const renderGameContent = () => {
@@ -148,7 +178,8 @@ export default function GamePage() {
             </Button>
           </div>
         );
-      default: // loading_problem, operator_selection, number_selection, animating
+      default: // loading_problem, monkey_entering, operator_selection, number_selection, elevator_moving, monkey_exiting
+        const showProblem = gameState === "operator_selection" || gameState === "number_selection" || gameState === "elevator_moving" || gameState === "monkey_exiting";
         return (
           <>
             <Scoreboard 
@@ -158,7 +189,7 @@ export default function GamePage() {
               currentDifficulty={difficulty}
             />
             <ProblemStatement
-              isLoading={gameState === "loading_problem"}
+              isLoading={gameState === "loading_problem" || gameState === "monkey_entering" || !showProblem}
               startFloor={startFloor}
               targetFloor={targetFloor}
               selectedOperator={selectedOperator}
@@ -166,20 +197,18 @@ export default function GamePage() {
               gameState={gameState}
             />
             <div className="flex flex-row items-start justify-center gap-6 my-6">
-              {/* Elevator Section */}
-              <div className="relative"> {/* This div is for positioning CelebrationEffect */}
+              <div className="relative">
                 <ElevatorDisplay
                   currentElevatorFloor={currentElevatorFloor}
                   minFloor={MIN_FLOOR}
                   maxFloor={MAX_FLOOR}
-                  showCorrectIndicator={gameState === "animating"}
-                  isCorrect={isAnimatingCorrect}
+                  monkeyPosition={monkeyPosition}
+                  monkeyEmotion={monkeyEmotion}
+                  isElevatorMoving={gameState === "elevator_moving"}
                 />
-                <CelebrationEffect active={gameState === "animating" && isAnimatingCorrect} />
+                <CelebrationEffect active={showCelebration && monkeyPosition === 'exiting'} />
               </div>
-
-              {/* Controls Section */}
-              <div className="w-[260px]"> {/* Fixed width for controls panel container */}
+              <div className="w-[260px]">
                 <Controls
                   gameState={gameState}
                   selectedOperator={selectedOperator}
@@ -198,21 +227,23 @@ export default function GamePage() {
   let footerMessage = "";
   if (gameState === "operator_selection") footerMessage = "Choose an operation (+ or -).";
   else if (gameState === "number_selection") footerMessage = "Choose how many floors (1-10).";
-  else if (gameState === "animating") footerMessage = "Whee! Checking your answer...";
+  else if (gameState === "elevator_moving") footerMessage = "Elevator moving...";
+  else if (gameState === "monkey_exiting") footerMessage = monkeyEmotion === 'happy' ? "Monkey is happy!" : "Monkey is confused...";
+  else if (gameState === "monkey_entering") footerMessage = "Monkey is getting ready...";
 
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground">
-      <Card className="w-full max-w-2xl shadow-2xl rounded-xl overflow-hidden"> {/* Increased max-w-lg to max-w-2xl for wider layout */}
+      <Card className="w-full max-w-2xl shadow-2xl rounded-xl overflow-hidden">
         <CardHeader className="bg-primary/10 pb-4 pt-6 text-center">
            <h1 className="text-3xl font-bold text-primary tracking-tight">
             Elevator Math Mania
           </h1>
         </CardHeader>
-        <CardContent className="p-6 min-h-[550px] flex flex-col justify-between"> {/* Adjusted min-height for new layout */}
+        <CardContent className="p-6 min-h-[550px] flex flex-col justify-between">
           {renderGameContent()}
         </CardContent>
-        { (gameState === "operator_selection" || gameState === "number_selection" || gameState === "animating") &&
+        { (gameState !== "initial" && gameState !== "game_over" && gameState !== "loading_problem") &&
           <CardFooter className="text-xs text-muted-foreground justify-center pb-4 pt-2">
             {footerMessage}
           </CardFooter>

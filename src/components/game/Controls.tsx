@@ -7,9 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 type GameState =
   | "initial"
   | "loading_problem"
+  | "monkey_entering"
   | "operator_selection"
   | "number_selection"
-  | "animating"
+  | "elevator_moving"
+  | "monkey_exiting"
   | "game_over";
 
 interface ControlsProps {
@@ -33,7 +35,17 @@ const Controls: React.FC<ControlsProps> = ({
 }) => {
   const disableOperatorButtons = gameState !== "operator_selection";
   const disableNumberButtons = gameState !== "number_selection";
-  const disableSubmitButton = gameState !== "number_selection" || selectedNumber === null || selectedOperator === null || gameState === "animating";
+  const disableSubmitButton = gameState !== "number_selection" || selectedNumber === null || selectedOperator === null;
+  
+  const showControls = 
+    gameState === "operator_selection" || 
+    gameState === "number_selection" ||
+    gameState === "elevator_moving" || // Keep controls visible but disabled during these states
+    gameState === "monkey_exiting";
+
+  if (!showControls) {
+    return null; // Or a placeholder/skeleton if preferred during loading/entering
+  }
 
   return (
     <Card className="mt-2 shadow-md">
