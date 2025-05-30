@@ -16,7 +16,7 @@ interface ElevatorDisplayProps {
 
 const FLOOR_HEIGHT_REM = 2; // h-8 (2rem = 32px)
 const MONKEY_SIZE_REM = 1.75; // For w-7 h-7
-const SHAFT_WIDTH_REM = 12; // w-48
+const SHAFT_WIDTH_REM = 12; // w-48. Changed from mx-auto, now part of flex
 
 // Simple Monkey SVG
 const MonkeySvg: React.FC<{ emotion: MonkeyEmotion, className?: string }> = ({ emotion, className }) => (
@@ -119,7 +119,9 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
       <div
         className={cn(
             "absolute",
-            monkeyEmotion === 'confused' && monkeyPosition === 'exiting' && "animate-shake"
+            // Shake animation is applied if monkey is confused.
+            // This will typically happen when monkeyPosition is 'inside' during the result display phase.
+            monkeyEmotion === 'confused' && "animate-shake" 
         )}
         style={monkeyStyle}
         aria-label={`Monkey ${monkeyEmotion}`}
@@ -163,3 +165,4 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
 };
 
 export default ElevatorDisplay;
+

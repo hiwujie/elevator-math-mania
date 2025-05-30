@@ -28,7 +28,7 @@ type GameState =
   | "operator_selection"// Problem shown, player action
   | "number_selection"  // Player action
   | "elevator_moving"   // Elevator car moving
-  | "monkey_exiting"    // Monkey walking out, showing emotion
+  | "monkey_exiting"    // Covers monkey exiting happy OR staying inside confused (result display phase)
   | "game_over";
 
 type MonkeyPosition = 'hidden' | 'entering' | 'inside' | 'exiting';
@@ -123,15 +123,19 @@ export default function GamePage() {
     setCurrentElevatorFloor(visuallyBoundedResultFloor); 
 
     setTimeout(() => { // After elevator movement
-      setGameState("monkey_exiting");
-      setMonkeyPosition('exiting');
-      setMonkeyEmotion(correct ? 'happy' : 'confused');
+      setGameState("monkey_exiting"); // This state now means "showing result"
       if (correct) {
+        setMonkeyPosition('exiting');
+        setMonkeyEmotion('happy');
         setShowCelebration(true);
+      } else {
+        setMonkeyPosition('inside'); // Keep monkey inside
+        setMonkeyEmotion('confused');
+        setShowCelebration(false); // Ensure no celebration
       }
 
-      setTimeout(() => { // After monkey exit and emotion display
-        setShowCelebration(false);
+      setTimeout(() => { // After monkey emotion display (either exiting happy or staying inside confused)
+        setShowCelebration(false); // Ensure celebration is off
         if (correct) {
           setScore(prev => prev + 10);
         }
@@ -206,9 +210,10 @@ export default function GamePage() {
                   monkeyEmotion={monkeyEmotion}
                   isElevatorMoving={gameState === "elevator_moving"}
                 />
+                {/* CelebrationEffect is active only if showCelebration is true AND monkey is exiting */}
                 <CelebrationEffect active={showCelebration && monkeyPosition === 'exiting'} />
               </div>
-              <div className="w-[260px]">
+              <div className="w-[260px]"> {/* Increased width to better accommodate controls */}
                 <Controls
                   gameState={gameState}
                   selectedOperator={selectedOperator}
@@ -234,7 +239,7 @@ export default function GamePage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground">
-      <Card className="w-full max-w-2xl shadow-2xl rounded-xl overflow-hidden">
+      <Card className="w-full max-w-3xl shadow-2xl rounded-xl overflow-hidden"> {/* Increased max-width for better layout */}
         <CardHeader className="bg-primary/10 pb-4 pt-6 text-center">
            <h1 className="text-3xl font-bold text-primary tracking-tight">
             Elevator Math Mania
@@ -252,3 +257,4 @@ export default function GamePage() {
     </div>
   );
 }
+
