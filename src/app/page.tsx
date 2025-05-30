@@ -165,24 +165,31 @@ export default function GamePage() {
               selectedNumber={selectedNumber}
               gameState={gameState}
             />
-            <div className="relative mt-4 mb-4">
-              <ElevatorDisplay 
-                currentElevatorFloor={currentElevatorFloor} 
-                minFloor={MIN_FLOOR} 
-                maxFloor={MAX_FLOOR}
-                showCorrectIndicator={gameState === "animating"}
-                isCorrect={isAnimatingCorrect}
-              />
-               <CelebrationEffect active={gameState === "animating" && isAnimatingCorrect} />
+            <div className="flex flex-row items-start justify-center gap-6 my-6">
+              {/* Elevator Section */}
+              <div className="relative"> {/* This div is for positioning CelebrationEffect */}
+                <ElevatorDisplay
+                  currentElevatorFloor={currentElevatorFloor}
+                  minFloor={MIN_FLOOR}
+                  maxFloor={MAX_FLOOR}
+                  showCorrectIndicator={gameState === "animating"}
+                  isCorrect={isAnimatingCorrect}
+                />
+                <CelebrationEffect active={gameState === "animating" && isAnimatingCorrect} />
+              </div>
+
+              {/* Controls Section */}
+              <div className="w-[260px]"> {/* Fixed width for controls panel container */}
+                <Controls
+                  gameState={gameState}
+                  selectedOperator={selectedOperator}
+                  selectedNumber={selectedNumber}
+                  onOperatorSelect={handleOperatorSelect}
+                  onNumberSelect={handleNumberSelect}
+                  onSubmit={handleSubmitAnswer}
+                />
+              </div>
             </div>
-            <Controls 
-              gameState={gameState}
-              selectedOperator={selectedOperator}
-              selectedNumber={selectedNumber}
-              onOperatorSelect={handleOperatorSelect}
-              onNumberSelect={handleNumberSelect}
-              onSubmit={handleSubmitAnswer}
-            />
           </>
         );
     }
@@ -196,13 +203,13 @@ export default function GamePage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground">
-      <Card className="w-full max-w-lg shadow-2xl rounded-xl overflow-hidden">
+      <Card className="w-full max-w-2xl shadow-2xl rounded-xl overflow-hidden"> {/* Increased max-w-lg to max-w-2xl for wider layout */}
         <CardHeader className="bg-primary/10 pb-4 pt-6 text-center">
            <h1 className="text-3xl font-bold text-primary tracking-tight">
             Elevator Math Mania
           </h1>
         </CardHeader>
-        <CardContent className="p-6 min-h-[450px] flex flex-col justify-between">
+        <CardContent className="p-6 min-h-[550px] flex flex-col justify-between"> {/* Adjusted min-height for new layout */}
           {renderGameContent()}
         </CardContent>
         { (gameState === "operator_selection" || gameState === "number_selection" || gameState === "animating") &&

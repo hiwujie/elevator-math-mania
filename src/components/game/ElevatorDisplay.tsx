@@ -32,7 +32,11 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
 
 
   return (
-    <div className="relative w-48 h-[34rem] bg-secondary/30 rounded-lg shadow-inner mx-auto border-2 border-primary/50 overflow-hidden">
+    <div className={cn(
+        "relative w-48 h-[34rem] bg-secondary/30 rounded-lg shadow-inner border-2 border-primary/50 overflow-hidden"
+        // Removed mx-auto as it's now part of a flex layout controlled by parent
+      )}
+    >
       {/* Elevator Car */}
       <div
         className={cn(
