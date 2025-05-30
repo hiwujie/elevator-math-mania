@@ -19,7 +19,7 @@ interface LocaleContextType {
 const translations: Record<Locale, Translations> = {
   en: {
     page: {
-      mainTitle: "Elevator Math Mania",
+      mainTitle: "Play games ,Learn Math",
     },
     initialScreen: {
       title: "Elevator Math Mania!",
@@ -56,7 +56,7 @@ const translations: Record<Locale, Translations> = {
     },
     common: {
       english: "English",
-      chinese: "Chinese", // Corrected for English UI
+      chinese: "Chinese",
     }
   },
   zh: {
@@ -97,7 +97,7 @@ const translations: Record<Locale, Translations> = {
       ariaSubmitAnswer: "提交答案",
     },
     common: {
-      english: "英文", // Corrected for Chinese UI
+      english: "英文",
       chinese: "中文",
     }
   },
