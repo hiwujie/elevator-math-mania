@@ -2,6 +2,7 @@
 import type React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLocale } from '@/context/i18n';
 
 type GameState =
   | "initial"
@@ -14,7 +15,7 @@ type GameState =
   | "game_over";
 
 interface ProblemStatementProps {
-  isLoading: boolean; // True during AI call or monkey_entering
+  isLoading: boolean; 
   startFloor: number;
   targetFloor: number;
   selectedOperator: '+' | '-' | null;
@@ -30,14 +31,14 @@ const ProblemStatement: React.FC<ProblemStatementProps> = ({
   selectedNumber,
   gameState
 }) => {
+  const { t } = useLocale();
   
   let problemString = "";
   const showSkeleton = isLoading || gameState === "loading_problem" || gameState === "monkey_entering";
 
   if (showSkeleton) {
-    problemString = "Loading problem..."; // Placeholder, skeleton will be shown
+    problemString = t('problemStatement.loading'); 
   } else {
-    // gameState is operator_selection, number_selection, elevator_moving, or monkey_exiting
     const operatorDisplay = selectedOperator ?? '?';
     const numberDisplay = selectedNumber !== null ? selectedNumber : '?';
 
@@ -50,14 +51,11 @@ const ProblemStatement: React.FC<ProblemStatementProps> = ({
         problemString = `${startFloor} ${selectedOperator} ? = ${targetFloor}`;
       }
     } else if ((gameState === "elevator_moving" || gameState === "monkey_exiting") && selectedOperator && selectedNumber !== null) {
-      // Show the completed equation during animation and exit
       problemString = `${startFloor} ${selectedOperator} ${selectedNumber} = ${targetFloor}`;
     } else {
-        // Fallback for any other active game state before selections are made
         problemString = `${startFloor} ? ? = ${targetFloor}`;
     }
   }
-
 
   return (
     <Card className="mb-6 text-center shadow-md">
@@ -65,12 +63,17 @@ const ProblemStatement: React.FC<ProblemStatementProps> = ({
         {showSkeleton ? (
             <Skeleton className="h-7 w-3/4 mx-auto" />
         ) : (
-            <CardTitle className="text-xl md:text-2xl font-bold text-primary">Monkey at Floor {startFloor} wants to go to Floor {targetFloor}</CardTitle>
+            <CardTitle className="text-xl md:text-2xl font-bold text-primary">
+              {t('problemStatement.monkeyWantsToGo', { startFloor, targetFloor })}
+            </CardTitle>
         )}
       </CardHeader>
       <CardContent className="pt-2 pb-4">
         {showSkeleton ? (
           <div className="space-y-2">
+            <p className="text-3xl md:text-4xl font-mono font-semibold text-foreground">
+                {t('problemStatement.loading')}
+            </p>
             <Skeleton className="h-10 w-1/2 mx-auto" />
           </div>
         ) : (

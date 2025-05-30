@@ -3,6 +3,7 @@ import type React from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useLocale } from '@/context/i18n';
 
 type GameState =
   | "initial"
@@ -33,6 +34,7 @@ const Controls: React.FC<ControlsProps> = ({
   onNumberSelect,
   onSubmit,
 }) => {
+  const { t } = useLocale();
   const disableOperatorButtons = gameState !== "operator_selection";
   const disableNumberButtons = gameState !== "number_selection";
   const disableSubmitButton = gameState !== "number_selection" || selectedNumber === null || selectedOperator === null;
@@ -40,11 +42,11 @@ const Controls: React.FC<ControlsProps> = ({
   const showControls = 
     gameState === "operator_selection" || 
     gameState === "number_selection" ||
-    gameState === "elevator_moving" || // Keep controls visible but disabled during these states
+    gameState === "elevator_moving" || 
     gameState === "monkey_exiting";
 
   if (!showControls) {
-    return null; // Or a placeholder/skeleton if preferred during loading/entering
+    return null; 
   }
 
   return (
@@ -58,7 +60,7 @@ const Controls: React.FC<ControlsProps> = ({
             variant={selectedOperator === '+' ? "default" : "outline"}
             size="lg"
             className={selectedOperator === '+' ? "bg-primary text-primary-foreground" : "bg-primary/10 hover:bg-primary/20 border-primary text-primary"}
-            aria-label="Select Up Operator"
+            aria-label={t('controls.ariaSelectUp')}
           >
             <ArrowUp className="h-6 w-6" />
           </Button>
@@ -68,7 +70,7 @@ const Controls: React.FC<ControlsProps> = ({
             variant={selectedOperator === '-' ? "default" : "outline"}
             size="lg"
             className={selectedOperator === '-' ? "bg-primary text-primary-foreground" : "bg-primary/10 hover:bg-primary/20 border-primary text-primary"}
-            aria-label="Select Down Operator"
+            aria-label={t('controls.ariaSelectDown')}
           >
             <ArrowDown className="h-6 w-6" />
           </Button>
@@ -84,7 +86,7 @@ const Controls: React.FC<ControlsProps> = ({
               variant={selectedNumber === num ? "default" : "outline"}
               size="md" 
               className={selectedNumber === num ? "bg-secondary text-secondary-foreground" : ""}
-              aria-label={`Select number ${num}`}
+              aria-label={t('controls.ariaSelectNumber', { num })}
             >
               {num}
             </Button>
@@ -97,9 +99,9 @@ const Controls: React.FC<ControlsProps> = ({
           disabled={disableSubmitButton}
           size="lg"
           className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-          aria-label="Submit answer"
+          aria-label={t('controls.ariaSubmitAnswer')}
         >
-          <CheckCircle className="h-6 w-6 mr-2" /> Submit
+          <CheckCircle className="h-6 w-6 mr-2" /> {t('controls.submit')}
         </Button>
       </CardContent>
     </Card>
