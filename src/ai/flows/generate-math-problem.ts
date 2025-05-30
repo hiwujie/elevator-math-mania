@@ -1,13 +1,10 @@
 
-'use server';
+// This file is no longer used for problem generation in the current version of the game.
+// Problem generation is now handled algorithmically in src/app/page.tsx.
+// This file can be safely deleted or kept for future AI features.
 
-/**
- * @fileOverview Generates start and target floors for an elevator math game.
- *
- * - generateMathProblem - A function that generates start and target floors.
- * - GenerateMathProblemInput - The input type for the generateMathProblem function.
- * - GenerateMathProblemOutput - The return type for the generateMathProblem function.
- */
+/*
+'use server';
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
@@ -49,6 +46,7 @@ Constraints:
 Adjust the problem based on the difficulty level (1-10). For higher difficulty:
 -   The absolute values of startFloor and targetFloor can be larger (closer to the extremes of their ranges).
 -   The absolute difference (number of floors to move) can be larger (closer to 10).
+For difficulty level 1, try to use small positive numbers for startFloor and a small positive difference. Aim for variety even at low difficulties.
 
 Difficulty Level: {{{difficulty}}}
 `,
@@ -61,30 +59,37 @@ const generateMathProblemFlow = ai.defineFlow(
     outputSchema: GenerateMathProblemOutputSchema,
   },
   async input => {
-    // In a real scenario, you might want to add a loop here to re-call the prompt
-    // if it fails to meet constraints (e.g. startFloor === targetFloor, or abs diff not 1-10)
-    // For simplicity, we're relying on the prompt to be good.
     const {output} = await prompt(input);
     if (!output) {
         throw new Error('AI failed to generate a problem.');
     }
-    // Additional validation can be added here if necessary
     if (output.startFloor === output.targetFloor) {
         console.warn("AI generated same start and target floor, attempting to fix or re-generate might be needed.");
-        // Simple fix: make targetFloor different if possible, or throw to retry.
-        // This part could be more robust.
         output.targetFloor = output.startFloor + (output.startFloor < 10 ? 1 : -1);
-        if (Math.abs(output.targetFloor - output.startFloor) > 10 || Math.abs(output.targetFloor - output.startFloor) < 1) {
-            //This fix is too naive, ideally re-prompt or better logic
-             throw new Error('AI generated invalid problem, constraints violated after simple fix.');
+        if (output.targetFloor < -10) output.targetFloor = -10;
+        if (output.targetFloor > 10) output.targetFloor = 10;
+        if (output.startFloor === output.targetFloor) {
+             output.targetFloor = output.startFloor + (output.startFloor > -10 ? -1 : 1);
+             if (output.targetFloor < -10) output.targetFloor = -10;
+             if (output.targetFloor > 10) output.targetFloor = 10;
+        }
+        if (output.startFloor === output.targetFloor) {
+            throw new Error('AI generated invalid problem, constraints violated (start == target) after simple fix.');
         }
     }
     if (Math.abs(output.targetFloor - output.startFloor) > 10 || Math.abs(output.targetFloor - output.startFloor) < 1) {
         console.warn("AI generated problem with invalid floor difference.");
-        // This is a critical constraint, ideally re-prompt.
         throw new Error('AI generated invalid problem, floor difference constraint violated.');
     }
-
+    if (output.startFloor < -5 || output.startFloor > 5) {
+        console.warn("AI generated problem with invalid start floor.");
+        throw new Error('AI generated invalid problem, startFloor constraint violated.');
+    }
+    if (output.targetFloor < -10 || output.targetFloor > 10) {
+        console.warn("AI generated problem with invalid target floor.");
+        throw new Error('AI generated invalid problem, targetFloor constraint violated.');
+    }
     return output;
   }
 );
+*/
