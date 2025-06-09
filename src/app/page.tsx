@@ -73,25 +73,39 @@ function generateProblemAlgorithmically(difficulty: number): AlgorithmicProblem 
 
       if (targetFloor >= 0 && targetFloor <= MAX_FLOOR_LOGIC && startFloor !== targetFloor &&
           startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC &&
-          startFloor >= 0 && Math.abs(targetFloor-startFloor) <=10) { 
+          startFloor >= 0 && Math.abs(targetFloor-startFloor) >= 1 && Math.abs(targetFloor-startFloor) <=10) {
         break;
       }
     } else if (level === 2) {
-      startFloor = Math.floor(Math.random() * 19) - 9; // -9 to 9
+      // For Level 2, 50% chance to pick startFloor near zero to promote crossing zero.
+      if (Math.random() < 0.5) {
+        startFloor = Math.floor(Math.random() * 7) - 3; // -3 to 3
+      } else {
+        startFloor = Math.floor(Math.random() * 19) - 9; // -9 to 9
+      }
+      
       if (Math.random() < 0.5) targetFloor = startFloor + potentialDifference;
       else targetFloor = startFloor - potentialDifference;
 
       if (targetFloor >= MIN_FLOOR_LOGIC && targetFloor <= MAX_FLOOR_LOGIC && startFloor !== targetFloor &&
-          startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC  && Math.abs(targetFloor-startFloor) <=10) {
+          startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC  && 
+          Math.abs(targetFloor-startFloor) >= 1 && Math.abs(targetFloor-startFloor) <=10) {
          break;
       }
-    } else { 
-      startFloor = Math.floor(Math.random() * (MAX_FLOOR_LOGIC - MIN_FLOOR_LOGIC + 1)) + MIN_FLOOR_LOGIC; // -10 to 10
+    } else { // Level 3
+      // For Level 3, 50% chance to pick startFloor near zero.
+      if (Math.random() < 0.5) {
+        startFloor = Math.floor(Math.random() * 9) - 4; // -4 to 4
+      } else {
+        startFloor = Math.floor(Math.random() * (MAX_FLOOR_LOGIC - MIN_FLOOR_LOGIC + 1)) + MIN_FLOOR_LOGIC; // -10 to 10
+      }
+
       if (Math.random() < 0.5) targetFloor = startFloor + potentialDifference;
       else targetFloor = startFloor - potentialDifference;
 
       if (targetFloor >= MIN_FLOOR_LOGIC && targetFloor <= MAX_FLOOR_LOGIC && startFloor !== targetFloor &&
-          startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC && Math.abs(targetFloor-startFloor) <=10) {
+          startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC && 
+          Math.abs(targetFloor-startFloor) >= 1 && Math.abs(targetFloor-startFloor) <=10) {
         break;
       }
     }
@@ -220,7 +234,7 @@ export default function GamePage() {
           setScore(prev => prev + 10);
           nextProblemDifficulty = Math.min(10, difficulty + 1); 
         } else {
-           nextProblemDifficulty = Math.max(1, difficulty -1); // Decrease difficulty if incorrect, min 1
+           nextProblemDifficulty = Math.max(1, difficulty -1); 
         }
         setDifficulty(nextProblemDifficulty);
 
@@ -278,7 +292,7 @@ export default function GamePage() {
               currentDifficulty={difficulty}
             />
             
-            <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-6 my-6">
+            <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-6 my-4 md:my-6">
               <div className="relative mx-auto md:mx-0">
                 <ElevatorDisplay
                   currentElevatorFloor={currentElevatorFloor}
@@ -323,18 +337,18 @@ export default function GamePage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground">
+    <div className="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 bg-background text-foreground">
       <Card className="w-full max-w-3xl shadow-2xl rounded-xl overflow-hidden">
         <CardHeader className="bg-primary/10 pb-4 pt-6 text-center relative">
-           <h1 className="text-3xl font-bold text-primary tracking-tight">
+           <h1 className="text-2xl sm:text-3xl font-bold text-primary tracking-tight">
             {t('page.mainTitle')}
           </h1>
-          <div className="absolute top-2 right-2 flex space-x-2">
+          <div className="absolute top-2 right-2 flex space-x-1 sm:space-x-2">
             <Button
               variant={locale === 'en' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setLocale('en')}
-              className="text-xs"
+              className="text-xs px-2 sm:px-3"
             >
               {t('common.english')}
             </Button>
@@ -342,13 +356,13 @@ export default function GamePage() {
               variant={locale === 'zh' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setLocale('zh')}
-              className="text-xs"
+              className="text-xs px-2 sm:px-3"
             >
               {t('common.chinese')}
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-6 min-h-[550px] flex flex-col justify-between">
+        <CardContent className="p-4 sm:p-6 min-h-[500px] sm:min-h-[550px] flex flex-col justify-between">
           {renderGameContent()}
         </CardContent>
         { (gameState !== "initial" && gameState !== "game_over") &&
@@ -360,5 +374,7 @@ export default function GamePage() {
     </div>
   );
 }
+
+    
 
     
