@@ -43,15 +43,27 @@ const Controls: React.FC<ControlsProps> = ({
     gameState === "monkey_exiting";
 
   const disableOperatorButtons = isAnimatingOrLoading || gameState === "initial" || gameState === "game_over";
-  const disableNumberButtons = isAnimatingOrLoading || selectedOperator === null || gameState === "operator_selection" || gameState === "initial" || gameState === "game_over";
-  const disableSubmitButton = isAnimatingOrLoading || selectedOperator === null || selectedNumber === null || gameState !== "number_selection";
+  
+  const disableNumberButtons = 
+    isAnimatingOrLoading || 
+    gameState === "initial" || 
+    gameState === "game_over" ||
+    (gameState === "operator_selection" && !selectedOperator); // Disable numbers if operator not selected in operator_selection state
+
+  const disableSubmitButton = 
+    isAnimatingOrLoading || 
+    selectedOperator === null || 
+    selectedNumber === null || 
+    gameState !== "number_selection" || 
+    gameState === "initial" || 
+    gameState === "game_over";
   
   const showControls = 
     gameState === "operator_selection" || 
     gameState === "number_selection" ||
     gameState === "elevator_moving" || 
     gameState === "monkey_exiting" ||
-    gameState === "loading_problem" || // Keep controls visible but disabled during loading
+    gameState === "loading_problem" || 
     gameState === "monkey_entering";
 
   if (!showControls) {
@@ -59,7 +71,7 @@ const Controls: React.FC<ControlsProps> = ({
   }
 
   return (
-    <Card className="mt-2 shadow-md">
+    <Card className="shadow-md"> {/* Removed mt-2 */}
       <CardContent className="p-4 flex flex-col items-center space-y-3">
         {/* Operator Selection */}
         <div className="flex space-x-3 mb-2">

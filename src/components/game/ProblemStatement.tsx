@@ -58,7 +58,7 @@ const ProblemStatement: React.FC<ProblemStatementProps> = ({
   }
 
   return (
-    <Card className="mb-6 text-center shadow-md">
+    <Card className="text-center shadow-md"> {/* Removed mb-6 */}
       <CardHeader className="pb-2 pt-4">
         {showSkeleton ? (
             <Skeleton className="h-7 w-3/4 mx-auto" />

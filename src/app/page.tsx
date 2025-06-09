@@ -72,7 +72,8 @@ function generateProblemAlgorithmically(difficulty: number): AlgorithmicProblem 
       else targetFloor = startFloor - potentialDifference;
 
       if (targetFloor >= 0 && targetFloor <= MAX_FLOOR_LOGIC && startFloor !== targetFloor &&
-          startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC) {
+          startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC &&
+          startFloor >= 0) { // Ensure startFloor is also >=0 for level 1
         break;
       }
     } else if (level === 2) {
@@ -136,7 +137,6 @@ export default function GamePage() {
     setStartFloor(problemData.startFloor);
     setTargetFloor(problemData.targetFloor);
     
-    // Update viewport based on startFloor
     const initialViewMin = problemData.startFloor - VIEWPORT_HALF_SPAN;
     const initialViewMax = initialViewMin + VIEWPORT_TOTAL_FLOORS - 1;
     setDisplayMinFloor(initialViewMin);
@@ -169,10 +169,16 @@ export default function GamePage() {
   };
 
   const handleNumberSelect = (number: number) => {
-    if (gameState === "number_selection" && selectedOperator !== null) {
+    if (gameState === "number_selection" || gameState === "operator_selection") {
       setSelectedNumber(number);
+      if (!selectedOperator && gameState === "operator_selection") {
+        // If operator not yet selected, don't change game state yet
+      } else {
+        setGameState("number_selection"); // Ensure game state is number_selection
+      }
     }
   };
+  
 
   const handleSubmitAnswer = () => {
     if (gameState !== "number_selection" || selectedOperator === null || selectedNumber === null) return;
@@ -186,7 +192,6 @@ export default function GamePage() {
 
     const correct = calculatedResultFloor === targetFloor;
 
-    // Update viewport based on calculatedResultFloor BEFORE animation
     const newViewMin = calculatedResultFloor - VIEWPORT_HALF_SPAN;
     const newViewMax = newViewMin + VIEWPORT_TOTAL_FLOORS - 1;
     setDisplayMinFloor(newViewMin);
@@ -215,7 +220,7 @@ export default function GamePage() {
           setScore(prev => prev + 10);
           nextProblemDifficulty = Math.min(10, difficulty + 1); 
         } else {
-           // Difficulty remains the same
+           // Difficulty remains the same if incorrect
         }
         setDifficulty(nextProblemDifficulty);
 
@@ -272,14 +277,7 @@ export default function GamePage() {
               totalQuestions={TOTAL_QUESTIONS}
               currentDifficulty={difficulty}
             />
-            <ProblemStatement
-              isLoading={isLoadingProblem || !showProblem}
-              startFloor={startFloor}
-              targetFloor={targetFloor}
-              selectedOperator={selectedOperator}
-              selectedNumber={selectedNumber}
-              gameState={gameState}
-            />
+            
             <div className="flex flex-row items-start justify-center gap-6 my-6">
               <div className="relative">
                 <ElevatorDisplay
@@ -292,7 +290,15 @@ export default function GamePage() {
                 />
                 <CelebrationEffect active={showCelebration && monkeyPosition === 'exiting'} />
               </div>
-              <div className="w-[260px]">
+              <div className="flex flex-col w-[260px] space-y-4">
+                <ProblemStatement
+                  isLoading={isLoadingProblem || !showProblem}
+                  startFloor={startFloor}
+                  targetFloor={targetFloor}
+                  selectedOperator={selectedOperator}
+                  selectedNumber={selectedNumber}
+                  gameState={gameState}
+                />
                 <Controls
                   gameState={gameState}
                   selectedOperator={selectedOperator}
