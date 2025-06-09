@@ -73,7 +73,7 @@ function generateProblemAlgorithmically(difficulty: number): AlgorithmicProblem 
 
       if (targetFloor >= 0 && targetFloor <= MAX_FLOOR_LOGIC && startFloor !== targetFloor &&
           startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC &&
-          startFloor >= 0) { // Ensure startFloor is also >=0 for level 1
+          startFloor >= 0 && Math.abs(targetFloor-startFloor) <=10) { 
         break;
       }
     } else if (level === 2) {
@@ -82,7 +82,7 @@ function generateProblemAlgorithmically(difficulty: number): AlgorithmicProblem 
       else targetFloor = startFloor - potentialDifference;
 
       if (targetFloor >= MIN_FLOOR_LOGIC && targetFloor <= MAX_FLOOR_LOGIC && startFloor !== targetFloor &&
-          startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC ) {
+          startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC  && Math.abs(targetFloor-startFloor) <=10) {
          break;
       }
     } else { 
@@ -91,7 +91,7 @@ function generateProblemAlgorithmically(difficulty: number): AlgorithmicProblem 
       else targetFloor = startFloor - potentialDifference;
 
       if (targetFloor >= MIN_FLOOR_LOGIC && targetFloor <= MAX_FLOOR_LOGIC && startFloor !== targetFloor &&
-          startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC) {
+          startFloor >= MIN_FLOOR_LOGIC && startFloor <= MAX_FLOOR_LOGIC && Math.abs(targetFloor-startFloor) <=10) {
         break;
       }
     }
@@ -220,7 +220,7 @@ export default function GamePage() {
           setScore(prev => prev + 10);
           nextProblemDifficulty = Math.min(10, difficulty + 1); 
         } else {
-           // Difficulty remains the same if incorrect
+           nextProblemDifficulty = Math.max(1, difficulty -1); // Decrease difficulty if incorrect, min 1
         }
         setDifficulty(nextProblemDifficulty);
 
@@ -242,8 +242,8 @@ export default function GamePage() {
       case "initial":
         return (
           <div className="flex flex-col items-center justify-center h-full">
-            <CardTitle className="text-4xl font-bold mb-4 text-primary">{t('initialScreen.title')}</CardTitle>
-            <CardDescription className="text-lg mb-8 text-center">
+            <CardTitle className="text-3xl sm:text-4xl font-bold mb-4 text-primary">{t('initialScreen.title')}</CardTitle>
+            <CardDescription className="text-md sm:text-lg mb-8 text-center">
               {t('initialScreen.description')}
             </CardDescription>
             <Button onClick={startGame} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -254,11 +254,11 @@ export default function GamePage() {
       case "game_over":
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <CardTitle className="text-4xl font-bold mb-4 text-primary">{t('gameOverScreen.title')}</CardTitle>
-            <CardDescription className="text-2xl mb-2">
+            <CardTitle className="text-3xl sm:text-4xl font-bold mb-4 text-primary">{t('gameOverScreen.title')}</CardTitle>
+            <CardDescription className="text-xl sm:text-2xl mb-2">
               <span className="font-bold text-accent">{t('gameOverScreen.yourFinalScore', { score })}</span>
             </CardDescription>
-            <CardDescription className="text-lg mb-8">
+            <CardDescription className="text-md sm:text-lg mb-8">
               {t('gameOverScreen.answeredCorrectly', { correctCount: score / 10, totalQuestions: TOTAL_QUESTIONS })}
             </CardDescription>
             <Button onClick={startGame} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -278,8 +278,8 @@ export default function GamePage() {
               currentDifficulty={difficulty}
             />
             
-            <div className="flex flex-row items-start justify-center gap-6 my-6">
-              <div className="relative">
+            <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-6 my-6">
+              <div className="relative mx-auto md:mx-0">
                 <ElevatorDisplay
                   currentElevatorFloor={currentElevatorFloor}
                   minFloor={displayMinFloor}
@@ -290,7 +290,7 @@ export default function GamePage() {
                 />
                 <CelebrationEffect active={showCelebration && monkeyPosition === 'exiting'} />
               </div>
-              <div className="flex flex-col w-[260px] space-y-4">
+              <div className="flex flex-col w-full md:w-[300px] space-y-4">
                 <ProblemStatement
                   isLoading={isLoadingProblem || !showProblem}
                   startFloor={startFloor}
@@ -360,3 +360,5 @@ export default function GamePage() {
     </div>
   );
 }
+
+    
