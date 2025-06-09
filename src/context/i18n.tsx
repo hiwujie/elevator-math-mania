@@ -57,6 +57,9 @@ const translations: Record<Locale, Translations> = {
     common: {
       english: "English",
       chinese: "Chinese",
+      selectLanguagePlaceholder: "Language",
+      englishShortTrigger: "EN",
+      chineseShortTrigger: "CN",
     }
   },
   zh: {
@@ -99,6 +102,9 @@ const translations: Record<Locale, Translations> = {
     common: {
       english: "英文",
       chinese: "中文",
+      selectLanguagePlaceholder: "语言",
+      englishShortTrigger: "EN",
+      chineseShortTrigger: "CN",
     }
   },
 };

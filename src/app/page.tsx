@@ -5,6 +5,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, Play } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
+
 
 import Scoreboard from '@/components/game/Scoreboard';
 import ProblemStatement from '@/components/game/ProblemStatement';
@@ -234,7 +241,8 @@ export default function GamePage() {
           setScore(prev => prev + 10);
           nextProblemDifficulty = Math.min(10, difficulty + 1); 
         } else {
-           nextProblemDifficulty = Math.max(1, difficulty -1 ); // Decrease difficulty if incorrect, min 1
+           // Difficulty remains the same if incorrect
+           nextProblemDifficulty = difficulty;
         }
         setDifficulty(nextProblemDifficulty);
 
@@ -349,22 +357,18 @@ export default function GamePage() {
               {t('page.mainTitle')}
             </h1>
             <div className="flex space-x-1 sm:space-x-2 order-1 sm:order-2">
-              <Button
-                variant={locale === 'en' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLocale('en')}
-                className="text-xs px-2 sm:px-3 leading-tight h-7 sm:h-8" 
-              >
-                {t('common.english')}
-              </Button>
-              <Button
-                variant={locale === 'zh' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLocale('zh')}
-                className="text-xs px-2 sm:px-3 leading-tight h-7 sm:h-8"
-              >
-                {t('common.chinese')}
-              </Button>
+              <Select value={locale} onValueChange={(newLocale) => setLocale(newLocale as Locale)}>
+                <SelectTrigger
+                  className="w-auto min-w-[60px] sm:min-w-[70px] h-7 sm:h-8 text-xs px-2 sm:px-3 flex items-center justify-between"
+                  aria-label={t('common.selectLanguagePlaceholder')}
+                >
+                  <span>{locale === 'en' ? t('common.englishShortTrigger') : t('common.chineseShortTrigger')}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en" className="text-xs">{t('common.english')}</SelectItem>
+                  <SelectItem value="zh" className="text-xs">{t('common.chinese')}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -375,4 +379,3 @@ export default function GamePage() {
     </div>
   );
 }
-
