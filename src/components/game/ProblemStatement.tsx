@@ -58,7 +58,7 @@ const ProblemStatement: React.FC<ProblemStatementProps> = ({
   }
 
   return (
-    <Card className="text-center shadow-md"> {/* Removed mb-6 */}
+    <Card className="text-center shadow-md">
       <CardHeader className="pb-2 pt-4">
         {showSkeleton ? (
             <Skeleton className="h-7 w-3/4 mx-auto" />
@@ -71,13 +71,13 @@ const ProblemStatement: React.FC<ProblemStatementProps> = ({
       <CardContent className="pt-2 pb-4">
         {showSkeleton ? (
           <div className="space-y-2">
-            <p className="text-3xl md:text-4xl font-mono font-semibold text-foreground">
+            <p className="text-2xl md:text-3xl font-mono font-semibold text-foreground">
                 {t('problemStatement.loading')}
             </p>
             <Skeleton className="h-10 w-1/2 mx-auto" />
           </div>
         ) : (
-          <p className="text-3xl md:text-4xl font-mono font-semibold text-foreground">
+          <p className="text-2xl md:text-3xl font-mono font-semibold text-foreground">
             {problemString}
           </p>
         )}
