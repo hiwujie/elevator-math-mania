@@ -71,13 +71,13 @@ const ProblemStatement: React.FC<ProblemStatementProps> = ({
       <CardContent className="pt-2 pb-4">
         {showSkeleton ? (
           <div className="space-y-2">
-            <p className="text-2xl md:text-3xl font-mono font-semibold text-foreground">
+            <p className="text-xl md:text-2xl font-mono font-semibold text-foreground">
                 {t('problemStatement.loading')}
             </p>
             <Skeleton className="h-10 w-1/2 mx-auto" />
           </div>
         ) : (
-          <p className="text-2xl md:text-3xl font-mono font-semibold text-foreground">
+          <p className="text-xl md:text-2xl font-mono font-semibold text-foreground">
             {problemString}
           </p>
         )}
