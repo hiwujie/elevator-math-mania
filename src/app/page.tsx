@@ -234,7 +234,7 @@ export default function GamePage() {
           setScore(prev => prev + 10);
           nextProblemDifficulty = Math.min(10, difficulty + 1); 
         } else {
-           // Difficulty stays the same if incorrect
+           nextProblemDifficulty = Math.max(1, difficulty -1 ); // Decrease difficulty if incorrect, min 1
         }
         setDifficulty(nextProblemDifficulty);
 
@@ -263,8 +263,8 @@ export default function GamePage() {
       case "initial":
         return (
           <div className="flex flex-col items-center justify-center h-full">
-            <CardTitle className="text-3xl sm:text-4xl font-bold mb-4 text-primary">{t('initialScreen.title')}</CardTitle>
-            <CardDescription className="text-md sm:text-lg mb-8 text-center">
+            <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-primary text-center">{t('initialScreen.title')}</CardTitle>
+            <CardDescription className="text-base sm:text-lg mb-8 text-center">
               {t('initialScreen.description')}
             </CardDescription>
             <Button onClick={startGame} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -275,11 +275,11 @@ export default function GamePage() {
       case "game_over":
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <CardTitle className="text-3xl sm:text-4xl font-bold mb-4 text-primary">{t('gameOverScreen.title')}</CardTitle>
-            <CardDescription className="text-xl sm:text-2xl mb-2">
+            <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-primary">{t('gameOverScreen.title')}</CardTitle>
+            <CardDescription className="text-lg sm:text-xl md:text-2xl mb-2">
               <span className="font-bold text-accent">{t('gameOverScreen.yourFinalScore', { score })}</span>
             </CardDescription>
-            <CardDescription className="text-md sm:text-lg mb-8">
+            <CardDescription className="text-base sm:text-lg mb-8">
               {t('gameOverScreen.answeredCorrectly', { correctCount: score / 10, totalQuestions: TOTAL_QUESTIONS })}
             </CardDescription>
             <Button onClick={startGame} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -304,7 +304,7 @@ export default function GamePage() {
               </div>
             }
             
-            <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-6 my-4 md:my-6">
+            <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-4 md:gap-6 my-4">
               <div className="relative mx-auto md:mx-0">
                 <ElevatorDisplay
                   currentElevatorFloor={currentElevatorFloor}
@@ -316,7 +316,7 @@ export default function GamePage() {
                 />
                 <CelebrationEffect active={showCelebration && monkeyPosition === 'exiting'} />
               </div>
-              <div className="flex flex-col w-full md:w-[300px] space-y-4">
+              <div className="flex flex-col w-full md:w-[300px] space-y-3 md:space-y-4">
                 <ProblemStatement
                   isLoading={isLoadingProblem || !showProblem}
                   startFloor={startFloor}
@@ -343,34 +343,36 @@ export default function GamePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 bg-background text-foreground">
       <Card className="w-full max-w-3xl shadow-2xl rounded-xl overflow-hidden">
-        <CardHeader className="bg-primary/10 pb-4 pt-6 text-center relative">
-           <h1 className="text-2xl sm:text-3xl font-bold text-primary tracking-tight">
-            {t('page.mainTitle')}
-          </h1>
-          <div className="absolute top-2 right-2 flex space-x-1 sm:space-x-2">
-            <Button
-              variant={locale === 'en' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setLocale('en')}
-              className="text-xs px-2 sm:px-3"
-            >
-              {t('common.english')}
-            </Button>
-            <Button
-              variant={locale === 'zh' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setLocale('zh')}
-              className="text-xs px-2 sm:px-3"
-            >
-              {t('common.chinese')}
-            </Button>
+        <CardHeader className="bg-primary/10 pb-4 pt-6 px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
+            <h1 className="text-xl text-center sm:text-left sm:text-2xl md:text-3xl font-bold text-primary tracking-tight order-2 sm:order-1">
+              {t('page.mainTitle')}
+            </h1>
+            <div className="flex space-x-1 sm:space-x-2 order-1 sm:order-2">
+              <Button
+                variant={locale === 'en' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLocale('en')}
+                className="text-xs px-2 sm:px-3 leading-tight h-7 sm:h-8" 
+              >
+                {t('common.english')}
+              </Button>
+              <Button
+                variant={locale === 'zh' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLocale('zh')}
+                className="text-xs px-2 sm:px-3 leading-tight h-7 sm:h-8"
+              >
+                {t('common.chinese')}
+              </Button>
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 min-h-[500px] sm:min-h-[550px] flex flex-col justify-between">
+        <CardContent className="p-3 sm:p-4 md:p-6 min-h-[420px] sm:min-h-[480px] md:min-h-[550px] flex flex-col justify-start">
           {renderGameContent()}
         </CardContent>
-        {/* Removed CardFooter from here */}
       </Card>
     </div>
   );
 }
+
