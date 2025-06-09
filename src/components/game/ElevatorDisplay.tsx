@@ -6,7 +6,7 @@ type MonkeyPosition = 'hidden' | 'entering' | 'inside' | 'exiting';
 type MonkeyEmotion = 'neutral' | 'happy' | 'confused';
 
 interface ElevatorDisplayProps {
-  currentElevatorFloor: number; 
+  currentElevatorFloor: number;
   minFloor: number; // The minimum floor label to display (dynamic)
   maxFloor: number; // The maximum floor label to display (dynamic)
   monkeyPosition: MonkeyPosition;
@@ -16,7 +16,7 @@ interface ElevatorDisplayProps {
 
 const FLOOR_HEIGHT_REM = 2; // h-8 (2rem = 32px)
 const MONKEY_SIZE_REM = 1.75; // For w-7 h-7
-const SHAFT_WIDTH_REM = 12; 
+const SHAFT_WIDTH_REM = 12;
 const ELEVATOR_SHAFT_VISIBLE_FLOORS = 11; // Should match VIEWPORT_TOTAL_FLOORS in page.tsx
 const SHAFT_TOTAL_HEIGHT_REM = ELEVATOR_SHAFT_VISIBLE_FLOORS * FLOOR_HEIGHT_REM; // 11 * 2 = 22rem
 
@@ -31,7 +31,7 @@ const MonkeySvg: React.FC<{ emotion: MonkeyEmotion, className?: string }> = ({ e
     <circle cx="25" cy="20" r="15" className="fill-amber-600" />
     {/* Body */}
     <rect x="15" y="30" width="20" height="25" rx="5" className="fill-amber-700" />
-    
+
     {/* Face - simple centered eyes and mouth */}
     {emotion === 'neutral' && (
       <>
@@ -63,49 +63,49 @@ const MonkeySvg: React.FC<{ emotion: MonkeyEmotion, className?: string }> = ({ e
 
 
 const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
-  currentElevatorFloor, 
-  minFloor: displayMinFloor, 
-  maxFloor: displayMaxFloor, 
+  currentElevatorFloor,
+  minFloor: displayMinFloor,
+  maxFloor: displayMaxFloor,
   monkeyPosition,
   monkeyEmotion,
   isElevatorMoving,
 }) => {
   const displayableFloors = Array.from({ length: displayMaxFloor - displayMinFloor + 1 }, (_, i) => displayMaxFloor - i);
-  
+
   const elevatorCarTopPositionRem = (displayMaxFloor - currentElevatorFloor) * FLOOR_HEIGHT_REM;
 
   let monkeyTopRem = elevatorCarTopPositionRem + (FLOOR_HEIGHT_REM - MONKEY_SIZE_REM) / 2;
-  let monkeyLeftRem = (SHAFT_WIDTH_REM / 2) - (MONKEY_SIZE_REM / 2) ; 
+  let monkeyLeftRem = (SHAFT_WIDTH_REM / 2) - (MONKEY_SIZE_REM / 2) ;
   let monkeyOpacity = 0;
 
   if (monkeyPosition === 'hidden') {
     monkeyOpacity = 0;
   } else if (monkeyPosition === 'entering') {
     monkeyOpacity = 1;
-    monkeyLeftRem = -MONKEY_SIZE_REM * 1.5; 
+    monkeyLeftRem = -MONKEY_SIZE_REM * 1.5;
   } else if (monkeyPosition === 'inside') {
     monkeyOpacity = 1;
   } else if (monkeyPosition === 'exiting') {
     monkeyOpacity = 1;
-    monkeyLeftRem = SHAFT_WIDTH_REM + MONKEY_SIZE_REM * 0.5; 
+    monkeyLeftRem = SHAFT_WIDTH_REM + MONKEY_SIZE_REM * 0.5;
   }
-  
+
   const monkeyStyle: React.CSSProperties = {
     top: `${monkeyTopRem}rem`,
     left: monkeyPosition === 'entering' && !isElevatorMoving ? `${(SHAFT_WIDTH_REM / 2) - (MONKEY_SIZE_REM / 2)}rem` : `${monkeyLeftRem}rem`,
     width: `${MONKEY_SIZE_REM}rem`,
     height: `${MONKEY_SIZE_REM}rem`,
     opacity: monkeyOpacity,
-    transition: `top ${isElevatorMoving ? '0.5s' : '0s'} ease-in-out, left 0.7s ease-in-out, opacity 0.5s ease-in-out`,
+    transition: `top ${isElevatorMoving ? '1.5s' : '0s'} ease-in-out, left 0.7s ease-in-out, opacity 0.5s ease-in-out`,
     zIndex: 15,
   };
-  if (monkeyPosition === 'entering' && isElevatorMoving) { 
-     monkeyStyle.transition = `top 0.5s ease-in-out, opacity 0.5s ease-in-out`;
+  if (monkeyPosition === 'entering' && isElevatorMoving) {
+     monkeyStyle.transition = `top ${isElevatorMoving ? '1.5s' : '0s'} ease-in-out, opacity 0.5s ease-in-out`;
   }
 
 
   return (
-    <div 
+    <div
         className={cn(
             "relative bg-secondary/30 rounded-lg shadow-inner border-2 border-primary/50 overflow-hidden"
           )}
@@ -118,7 +118,7 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
       <div
         className={cn(
             "absolute",
-            monkeyEmotion === 'confused' && "animate-shake" 
+            monkeyEmotion === 'confused' && "animate-shake"
         )}
         style={monkeyStyle}
         aria-label={`Monkey ${monkeyEmotion}`}
@@ -129,10 +129,10 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
       {/* Elevator Car */}
       <div
         className={cn(
-          "absolute left-1/2 transform -translate-x-1/2 w-10 border-2 border-primary bg-primary/70 rounded-md transition-all duration-500 ease-in-out flex items-center justify-center"
+          "absolute left-1/2 transform -translate-x-1/2 w-10 border-2 border-primary bg-primary/70 rounded-md transition-all duration-[1500ms] ease-in-out flex items-center justify-center"
         )}
         style={{
-          height: `${FLOOR_HEIGHT_REM - 0.25}rem`, 
+          height: `${FLOOR_HEIGHT_REM - 0.25}rem`,
           top: `${elevatorCarTopPositionRem}rem`,
           zIndex: 10,
         }}
@@ -148,7 +148,7 @@ const ElevatorDisplay: React.FC<ElevatorDisplayProps> = ({
             key={floorNum}
             className={cn(
               "flex items-center justify-start text-xs font-medium text-muted-foreground border-b border-primary/20",
-              floorNum === 0 && "border-b-2 border-primary font-bold text-primary" 
+              floorNum === 0 && "border-b-2 border-primary font-bold text-primary"
             )}
             style={{ height: `${FLOOR_HEIGHT_REM}rem` }}
             aria-label={`Floor ${floorNum}`}
