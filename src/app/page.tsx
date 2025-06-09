@@ -234,7 +234,7 @@ export default function GamePage() {
           setScore(prev => prev + 10);
           nextProblemDifficulty = Math.min(10, difficulty + 1); 
         } else {
-           nextProblemDifficulty = Math.max(1, difficulty -1); 
+           // Difficulty stays the same if incorrect
         }
         setDifficulty(nextProblemDifficulty);
 
@@ -250,6 +250,13 @@ export default function GamePage() {
       }, MONKEY_EXIT_EMOTE_DURATION);
     }, ELEVATOR_MOVE_DURATION);
   };
+
+  let footerMessage = "";
+  if (gameState === "operator_selection") footerMessage = t('controls.operatorPrompt');
+  else if (gameState === "number_selection") footerMessage = t('controls.numberPrompt');
+  else if (gameState === "elevator_moving") footerMessage = t('controls.elevatorMoving');
+  else if (gameState === "monkey_exiting") footerMessage = monkeyEmotion === 'happy' ? t('controls.monkeyHappy') : t('controls.monkeyConfused');
+  else if (gameState === "monkey_entering" || gameState === "loading_problem") footerMessage = t('controls.monkeyGettingReady');
 
   const renderGameContent = () => {
     switch (gameState) {
@@ -291,6 +298,11 @@ export default function GamePage() {
               totalQuestions={TOTAL_QUESTIONS}
               currentDifficulty={difficulty}
             />
+            { (gameState !== "initial" && gameState !== "game_over" && footerMessage) &&
+              <div className="text-xs text-muted-foreground text-center py-2 px-4">
+                {footerMessage}
+              </div>
+            }
             
             <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-6 my-4 md:my-6">
               <div className="relative mx-auto md:mx-0">
@@ -328,14 +340,6 @@ export default function GamePage() {
     }
   };
 
-  let footerMessage = "";
-  if (gameState === "operator_selection") footerMessage = t('controls.operatorPrompt');
-  else if (gameState === "number_selection") footerMessage = t('controls.numberPrompt');
-  else if (gameState === "elevator_moving") footerMessage = t('controls.elevatorMoving');
-  else if (gameState === "monkey_exiting") footerMessage = monkeyEmotion === 'happy' ? t('controls.monkeyHappy') : t('controls.monkeyConfused');
-  else if (gameState === "monkey_entering" || gameState === "loading_problem") footerMessage = t('controls.monkeyGettingReady');
-
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 bg-background text-foreground">
       <Card className="w-full max-w-3xl shadow-2xl rounded-xl overflow-hidden">
@@ -365,16 +369,8 @@ export default function GamePage() {
         <CardContent className="p-4 sm:p-6 min-h-[500px] sm:min-h-[550px] flex flex-col justify-between">
           {renderGameContent()}
         </CardContent>
-        { (gameState !== "initial" && gameState !== "game_over") &&
-          <CardFooter className="text-xs text-muted-foreground justify-center pb-4 pt-2">
-            {footerMessage || <>&nbsp;</>}
-          </CardFooter>
-        }
+        {/* Removed CardFooter from here */}
       </Card>
     </div>
   );
 }
-
-    
-
-    
