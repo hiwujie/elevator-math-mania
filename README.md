@@ -49,9 +49,8 @@ To run the game locally, follow these steps:
 *Note*: No additional dependencies are required as the game runs entirely in the browser.
 
 ## Technologies Used
-- **HTML5**: For the game structure.
+- **Typescript**: For the game structure.
 - **CSS3**: For styling and responsive design.
-- **JavaScript**: For game logic and interactivity.
 
 ## Contributing
 Contributions are welcome! To contribute:
