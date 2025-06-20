@@ -25,7 +25,7 @@ Elevator Math Game is an engaging tool for children to learn the concepts of pos
 
 ## Demo
 Try the game live at https://math1.qqwps.fun/  
-*Note*: A screenshot or short GIF of the gameplay can be added here to showcase the interface.
+![image](/screenshot.png)
 
 
 
